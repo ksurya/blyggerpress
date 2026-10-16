@@ -3,10 +3,10 @@
 A local-first studio for [Blygger](https://blygger.org) 0.3 blygs, and the
 shared contracts the rest of the project is built against.
 
-This repository is currently at the **contract stage**: it pins the Blygger 0.3
-specification, defines the shared module interfaces, and ships the conformance
-fixtures that every implementation issue tests against. Product modules are
-delivered by the sibling issues (SUK-136..SUK-146).
+This repository pins the Blygger 0.3 specification and shared contracts, with
+reader imports (SUK-140) and the item publication lifecycle (SUK-137) implemented.
+The remaining studio, rendering, deployment, and release work is tracked by
+SUK-136..SUK-146.
 
 ## What this repo contains
 
@@ -25,12 +25,14 @@ delivered by the sibling issues (SUK-136..SUK-146).
 ## Quick start
 
 ```sh
-node tools/validate-fixtures.mjs     # the gate (exit 1 on failure)
+npm test                           # lifecycle, reader, and integration tests
+npm run test:fixtures              # spec pin, all cases, and requirement coverage
 node tools/build-requirements.mjs    # regenerate docs/REQUIREMENTS.md
 node tools/build-wire-fixtures.mjs   # regenerate fixtures/wire/** and fixtures/store/**
 ```
 
-Requires Node.js 20+ (uses `import.meta.dirname`). No dependencies.
+Requires Node.js 20+ (uses `import.meta.dirname`). No runtime dependencies; run
+`npm ci` to install the IndexedDB test dependency.
 
 ## Documentation
 
@@ -51,8 +53,54 @@ forward**; §16 constructs are out of scope.
 
 ## Status
 
-Contract layer: **complete and gated**. Implementation: SUK-136..SUK-145,
-validated for full coverage and interoperability by SUK-146.
+Contract layer: **complete and gated**. Item lifecycle and reader imports are
+implemented; full MVP coverage and interoperability remain the SUK-146 release
+gate. This module does not establish full-protocol conformance.
+
+## Item publication lifecycle
+
+`src/blyg/index.mjs` exports the dependency-free lifecycle and reader APIs. The
+lifecycle runs in browsers and Node; clocks and ID factories can be injected for
+deterministic tests. Production IDs use Web Crypto randomness.
+
+```js
+import { createLifecycle, projectItemFiles, serializeFiles } from "./src/blyg/index.mjs";
+
+const lifecycle = createLifecycle({ origin: "https://example.com/blyg/" });
+const draft = lifecycle.newDraft({ contentMd: "Hello", contentHtml: "<p>Hello</p>" });
+lifecycle.saveDraft(draft.localId, { contentMd: "Hello again", contentHtml: "<p>Hello again</p>" });
+const published = lifecycle.publish(draft.localId); // v1; draft saves emit nothing
+lifecycle.pin(published.itemId, published.version);
+lifecycle.withdraw(published.itemId); // v2 endcap; pinned v1 remains available
+const files = serializeFiles(projectItemFiles(lifecycle.listItems()));
+// files contains only canonical item JSON and explicitly pinned versions.
+```
+
+For edits and returns, open a draft with `itemId`, the original authored `kind`,
+and the new content. A thread draft requires `transclusions`, even when empty.
+Identity, author, lineage, and page are preserved. Failed publishes leave item
+and draft state unchanged. Published documents are detached copies; unpinned
+history cannot be obtained through `pinnedDocument`.
+
+Before publishing media, call `registerMedia(entry, { bytes })`, or supply a
+precomputed lowercase SHA-256 `digest`. Each media URL locks its MIME and byte
+digest; changing bytes requires a new URL. `retainedMediaUrls()` lists assets
+promised by pins, including after withdrawal. Asset storage/export adapters must
+persist those bytes and the private ledger and honor retention; this in-memory
+engine does not write files or implement durable storage.
+
+`listItems`, `snapshot`, `versions`, and draft APIs return **private authoring
+state**, including withheld history. Never serialize them into a publication.
+Use `projectItemFiles` for wire output. It shares publication assertions and
+fixtures with the static export work (SUK-138); full manifest, feed, HTML rendering,
+and deployment remain that issue's responsibility. Render and sanitize HTML
+before handing it to this engine.
+
+Changelog notes are explicit publication metadata. The engine rejects complete
+withheld bodies and normalized quotes of 40 or more characters; this is a
+conservative guard, not a semantic proof. Authors must also avoid shorter quotes
+or paraphrases that reproduce withheld content. Generation provenance is
+allow-listed and self-asserted; authoring instructions never become wire fields.
 
 ## Private persistence
 

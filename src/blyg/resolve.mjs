@@ -16,7 +16,8 @@ export async function resolveSubscription(input, { fetchText, parseFeed = defaul
   if (!candidate.pathname.endsWith('/')) candidate.pathname += '/';
   const tried = [], cache = new Map(), budget = { remaining: 6 };
   async function get(target) {
-    const key = publicUrl(target);
+    let key;
+    try { key = publicUrl(target); } catch { return null; }
     if (cache.has(key)) return cache.get(key);
     if (tried.length >= 6 || budget.remaining <= 0) return null;
     tried.push(key);
@@ -55,11 +56,13 @@ export async function resolveSubscription(input, { fetchText, parseFeed = defaul
   const htmlLinks = page?.status === 200 && !feed ? links(page.body) : [];
   const rel = htmlLinks.find(l => l.rel?.toLowerCase().split(/\s+/).includes('blyg') && l.href);
   if (rel) {
-    const base = new URL(rel.href, page.finalUrl);
-    base.search = ''; base.hash = '';
-    if (!base.pathname.endsWith('/')) base.pathname += '/';
-    result = await manifest(new URL('blyg.json', base));
-    if (result) return result;
+    try {
+      const base = new URL(rel.href, page.finalUrl);
+      base.search = ''; base.hash = '';
+      if (!base.pathname.endsWith('/')) base.pathname += '/';
+      result = await manifest(new URL('blyg.json', base));
+      if (result) return result;
+    } catch { /* An invalid advertised URL does not disable conventional probes. */ }
   }
   for (const path of ['/blyg/blyg.json', '/blyg.json']) {
     result = await manifest(new URL(path, url));

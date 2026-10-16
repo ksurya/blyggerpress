@@ -95,3 +95,13 @@ test('committed sample discovery uses production ports and the normalized feed c
   const r = await subscribe(createStore(), 'https://example.com/blyg/', p);
   assert.equal(r.subscription.identityOrigin, 'https://example.com/blyg/');
 });
+
+
+test('unsafe and malformed advertised bases do not disable conventional discovery', async () => {
+  for (const href of ['http://127.0.0.1/', 'https://[invalid/']) {
+    const p = port({ 'https://example.com/page': { status: 200, body: `<link rel="blyg" href="${href}">` }, 'https://example.com/blyg/blyg.json': { status: 200, body: blyg } });
+    const result = await resolveSubscription('https://example.com/page', p);
+    assert.equal(result.identityOrigin, 'https://example.com/blyg/');
+    assert.ok(p.calls.every(([url]) => !url.includes('127.0.0.1')));
+  }
+});

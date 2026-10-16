@@ -62,6 +62,14 @@ export function normalizeMediaEntry(entry) {
   return out;
 }
 
+// URL fragments do not select different bytes. Normalize host/scheme/default
+// ports too, so aliases cannot give one served object conflicting baselines.
+function mediaKey(url, origin) {
+  const resolved = new URL(absoluteMediaUrl(url, origin));
+  resolved.hash = "";
+  return resolved.toString();
+}
+
 /** Raised when a media URL is asked to serve different bytes than before (spec 5.4, R5.4-2). */
 export class ImmutableMediaError extends Error {
   constructor(url, message) {
@@ -100,8 +108,15 @@ export class MediaLedger {
    */
   register(entry, evidence = {}) {
     const normalized = normalizeMediaEntry(entry);
-    const absolute = absoluteMediaUrl(normalized.url, evidence.origin ?? this.#origin);
-    const digest = evidence.digest ?? (evidence.bytes ? this.#digest(evidence.bytes) : undefined);
+    const absolute = mediaKey(normalized.url, evidence.origin ?? this.#origin);
+    const computed = evidence.bytes !== undefined ? this.#digest(evidence.bytes) : undefined;
+    if (computed !== undefined && evidence.digest !== undefined && computed !== evidence.digest) {
+      throw new Error("media digest does not match supplied bytes");
+    }
+    const digest = evidence.digest ?? computed;
+    if (digest !== undefined && (typeof digest !== "string" || !/^[0-9a-f]{64}$/.test(digest))) {
+      throw new Error("media digest must be a lowercase SHA-256 hex digest");
+    }
     const prior = this.#records.get(absolute);
     if (prior) {
       if (prior.mime !== normalized.mime) {
@@ -110,6 +125,8 @@ export class MediaLedger {
       if (prior.digest !== undefined && digest !== undefined && prior.digest !== digest) {
         throw new ImmutableMediaError(absolute, `media URL ${absolute} is immutable: it already serves different bytes`);
       }
+      // The first supplied byte evidence establishes the immutable baseline.
+      if (prior.digest === undefined && digest !== undefined) prior.digest = digest;
       // Same bytes: refresh alt if it was not recorded, never overwrite.
       if (prior.alt === undefined && normalized.alt !== undefined) prior.alt = normalized.alt;
       return { ...prior };
@@ -123,20 +140,20 @@ export class MediaLedger {
 
   /** The recorded state of a URL, or undefined if never published. */
   record(url, origin) {
-    const absolute = absoluteMediaUrl(url, origin ?? this.#origin);
+    const absolute = mediaKey(url, origin ?? this.#origin);
     const prior = this.#records.get(absolute);
     return prior ? { ...prior } : undefined;
   }
 
   /** Mark a media URL as retained forever (spec 8 rule 4). Returns the absolute URL. */
   retain(url, origin) {
-    const absolute = absoluteMediaUrl(url, origin ?? this.#origin);
+    const absolute = mediaKey(url, origin ?? this.#origin);
     this.#retained.add(absolute);
     return absolute;
   }
 
   isRetained(url, origin) {
-    return this.#retained.has(absoluteMediaUrl(url, origin ?? this.#origin));
+    return this.#retained.has(mediaKey(url, origin ?? this.#origin));
   }
 
   retainedUrls() {
@@ -165,6 +182,7 @@ export class MediaLedger {
   // The ledger stays dependency-free: a caller that has the bytes supplies them
   // via `digest` computed with blyg/hash, or hands over a hashing function here.
   #digest(bytes) {
+    if (!(bytes instanceof Uint8Array)) throw new Error("media bytes must be a Uint8Array");
     if (typeof this.#hashBytes !== "function") throw new Error("MediaLedger needs evidence.digest or a hashBytes function");
     return this.#hashBytes(bytes);
   }

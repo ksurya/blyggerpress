@@ -155,6 +155,7 @@ const COVERAGE = {
     const lifecycle = lc(["2026-07-22T09:00:00Z", "2026-07-23T09:00:00Z"]);
     const lineage = { origin: "https://blyg.protocol-institute.org/", id: "7gvp7ms7wq4nks6erdbbdp8cqc", version: 1 };
     const d = lifecycle.newDraft({ kind: "fragment", contentMd: "body", contentHtml: "<p>body</p>", media: [{ url: "media/x.png", mime: "image/png" }], forkedFrom: lineage });
+    lifecycle.registerMedia(d.media[0], { bytes: new Uint8Array([1]) });
     lifecycle.publish(d.localId, { at: "2026-07-22T09:00:00Z" });
     lifecycle.withdraw(ID_A, { at: "2026-07-23T09:00:00Z", note: "withdrawn" });
     const doc = lifecycle.itemDocument(ID_A);

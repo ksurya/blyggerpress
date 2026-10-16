@@ -88,3 +88,23 @@ test("a pinned document carries no media array (spec 8 rule 4)", () => {
   const pin = readJson("fixtures/wire/sample-blyg/items/1jt332depwffcsyfz9txf8c9r9/v2.json");
   assert.ok(!("media" in pin));
 });
+
+test("late byte evidence establishes a permanent digest baseline", () => {
+  const ledger = createMediaLedger({ origin: "https://example.com/", hashBytes: sha256HexOfBytes });
+  const entry = { url: "media/a.png", mime: "image/png" };
+  ledger.register(entry);
+  const bytes = new Uint8Array([1, 2, 3]);
+  ledger.register(entry, { bytes });
+  assert.equal(ledger.record(entry.url).digest, sha256HexOfBytes(bytes));
+  assert.throws(() => ledger.register(entry, { bytes: new Uint8Array([9]) }), ImmutableMediaError);
+  assert.throws(() => ledger.register({ ...entry, url: "other.png" }, { digest: "not-a-hash" }), /digest/);
+});
+
+test("URL aliases share one byte baseline and supplied digest must match bytes", () => {
+  const ledger = createMediaLedger({ origin: "https://example.com/", hashBytes: sha256HexOfBytes });
+  const entry = { url: "media/a.png", mime: "image/png" };
+  const bytes = new Uint8Array([1]);
+  ledger.register(entry, { bytes });
+  assert.throws(() => ledger.register({ ...entry, url: "HTTPS://EXAMPLE.COM:443/media/a.png#preview" }, { bytes: new Uint8Array([9]) }), ImmutableMediaError);
+  assert.throws(() => ledger.register({ ...entry, url: "media/b.png" }, { bytes, digest: "0".repeat(64) }), /does not match/);
+});

@@ -1,12 +1,8 @@
 // Shared wire primitives for the reader import path.
 //
-// These are the minimal, dependency-free readings of the shared contracts that
-// `blyg/reconcile` and its polling importer stand on: identity (§5.1), content
-// hashing (§5.1) and origin-scoped identity keys (§12.2, §13.1). They are forward
-// implementations of primitives the contract assigns elsewhere — `blyg/ids` and
-// `blyg/hash` (SUK-137), `blyg/reference` (SUK-141) — kept tiny and pure so the
-// owning modules can replace them without changing reconcile's observable
-// behaviour. Nothing here reads network, DOM or private studio state.
+// Identity and hashing come from their owning SUK-137 modules. Reference and
+// origin helpers remain here until SUK-141. All primitives work in browsers
+// and Node without importing Node-only APIs.
 export { CROCKFORD, isValidId } from "./ids.mjs";
 export { contentHash, sha256Hex } from "./hash.mjs";
 

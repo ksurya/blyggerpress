@@ -142,6 +142,7 @@ test("R9-1: a withdrawal endcap empties content and media, keeps the changelog, 
     media: [{ url: "media/x.png", mime: "image/png" }],
     forkedFrom: { origin: "https://blyg.protocol-institute.org/", id: "7gvp7ms7wq4nks6erdbbdp8cqc", version: 1 },
   });
+  for (const entry of draft.media) lc.registerMedia(entry, { bytes: new Uint8Array([1]) });
   lc.publish(draft.localId, { at: "2026-07-17T18:00:00Z" });
   lc.withdraw(ID_A, { at: "2026-07-17T19:00:00Z", note: "withdrawn" });
   const doc = lc.itemDocument(ID_A);
@@ -276,6 +277,7 @@ test("media on a pinned version is retained forever through the ledger", () => {
     contentHtml: '<p>A diagram: <img src="https://example.com/blyg/media/x7f2.png" alt="a diagram"></p>',
     media: [{ url: "media/x7f2.png", mime: "image/png", alt: "a diagram" }],
   });
+  lc.registerMedia(draft.media[0], { bytes: new Uint8Array([1, 2, 3]) });
   lc.publish(draft.localId, { at: "2026-07-18T12:00:00Z" });
   lc.pin("6y1e4khfxxckyd9dhwgrtv2dj4", 1);
   assert.deepEqual(retainedMediaUrls(lc.listItems()), ["https://example.com/blyg/media/x7f2.png"]);
@@ -363,4 +365,63 @@ test("document reads and saved patch objects cannot mutate publication state", (
   }
   assert.deepEqual(lc.snapshot(ID_A), before);
   assert.equal(lc.itemDocument(ID_A).stub_of.url, "https://example.org/original");
+});
+
+test("publication references drop nested private fields and preserve opaque author", () => {
+  const lc = fixed(["2026-01-01T00:00:00Z"]);
+  const cited = { retrieved: "2026-01-01T00:00:00Z", source: "Source", draftText: "SECRET" };
+  const ref = { origin: ORIGIN, id: ID_A, version: 1, cited, draftText: "SECRET" };
+  const d = lc.newDraft({ kind: "thread", transclusions: [{ ...ref, selector: { exact: "quote", draftText: "SECRET" } }], forkedFrom: ref, stubOf: { url: "https://example.org/", cited, draftText: "SECRET" }, author: { custom: { label: "opaque" } } });
+  lc.publish(d.localId);
+  lc.pin(ID_A, 1);
+  for (const doc of [lc.itemDocument(ID_A), lc.pinnedDocument(ID_A, 1)]) {
+    assert.ok(!JSON.stringify(doc).includes("SECRET"));
+    assert.deepEqual(doc.author, { custom: { label: "opaque" } });
+    assert.equal(doc.transclusions[0].selector.exact, "quote");
+  }
+});
+
+test("malformed citation shapes and ambiguous stubs fail before publication", () => {
+  const lc = fixed(["2026-01-01T00:00:00Z"]);
+  const ref = { origin: ORIGIN, id: ID_A, version: 1 };
+  assert.throws(() => lc.newDraft({ forkedFrom: { ...ref, cited: {} } }), /forked_from/);
+  assert.throws(() => lc.newDraft({ kind: "thread", transclusions: [], stubOf: { ...ref, url: "https://example.org/" } }), /stub_of/);
+  assert.throws(() => lc.newDraft({ kind: "thread", transclusions: [], stubOf: { url: "https://example.org/", cited: {} } }), /stub_of/);
+  assert.throws(() => lc.newDraft({ kind: "thread", transclusions: [{ ...ref, selector: { exact: "quote", prefix: 123 } }] }), /reference/);
+});
+
+test("media publication requires byte evidence and pins retain assets through withdrawal", () => {
+  const lc = fixed(["2026-07-17T18:00:00Z"]);
+  const media = { url: "media/a.png", mime: "image/png" };
+  const draft = lc.newDraft({ contentMd: "image", contentHtml: '<img src="https://example.com/blyg/media/a.png">', media: [media] });
+  assert.throws(() => lc.publish(draft.localId), /byte evidence/);
+  assert.deepEqual(lc.listItems(), []);
+  const bytes = new Uint8Array([1, 2, 3]);
+  lc.registerMedia(media, { bytes });
+  lc.publish(draft.localId);
+  lc.pin(ID_A, 1);
+  const pinBefore = lc.pinnedDocument(ID_A, 1);
+  lc.withdraw(ID_A);
+  assert.deepEqual(lc.pinnedDocument(ID_A, 1), pinBefore);
+  assert.deepEqual(lc.retainedMediaUrls(), ["https://example.com/blyg/media/a.png"]);
+  assert.throws(() => lc.registerMedia(media, { bytes: new Uint8Array([9]) }), /immutable/);
+  lc.registerMedia({ ...media, url: "media/b.png" }, { bytes: new Uint8Array([9]) });
+});
+
+test("notes cannot embed an entire short withheld body in surrounding prose", () => {
+  assert.throws(() => assertNoteDepth([{ version: 1, content_md: "private sentence" }], "Removed: private sentence."), NoteDepthError);
+  assert.doesNotThrow(() => assertNoteDepth([{ version: 1, content_md: "private sentence", pinned: true }], "Removed: private sentence."));
+});
+
+test("generation disclosure strips authoring instructions and omits an empty disclosure", () => {
+  const lc = fixed(["2026-07-17T18:00:00Z"]);
+  const d = lc.newDraft({ generated: [{ sources: [], model: "m", instructions: "PRIVATE PROMPT" }] });
+  lc.publish(d.localId);
+  lc.pin(ID_A, 1);
+  const before = lc.pinnedDocument(ID_A, 1);
+  assert.deepEqual(before.generated, [{ sources: [], model: "m" }]);
+  lc.saveDraft(d.localId, { generated: [] });
+  lc.publish(d.localId);
+  assert.ok(!("generated" in lc.itemDocument(ID_A)));
+  assert.deepEqual(lc.pinnedDocument(ID_A, 1), before);
 });

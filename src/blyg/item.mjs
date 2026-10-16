@@ -49,9 +49,21 @@ function push(errors, path, message) {
 
 // ----------------------------------------------------------- shape helpers
 
+export function isCited(value) {
+  return isPlainObject(value) && isIso8601Utc(value.retrieved)
+    && ["source", "author", "excerpt", "url"].every((key) => value[key] === undefined || typeof value[key] === "string");
+}
+
+export function isSelector(value) {
+  return isPlainObject(value) && typeof value.exact === "string"
+    && ["prefix", "suffix"].every((key) => value[key] === undefined || typeof value[key] === "string");
+}
+
 export function isReference(value) {
   return isPlainObject(value) && isValidId(value.id) && isPositiveInteger(value.version)
-    && (value.origin === undefined || typeof value.origin === "string");
+    && (value.origin === undefined || typeof value.origin === "string")
+    && (value.cited === undefined || isCited(value.cited))
+    && (value.selector === undefined || isSelector(value.selector));
 }
 
 export function isAbsoluteReference(value) {
@@ -68,8 +80,9 @@ export function isGeneratedSpan(value) {
 
 export function isStubOf(value) {
   if (!isPlainObject(value)) return false;
-  if (typeof value.url === "string") return true; // plain-web target shape
-  return isAbsoluteReference(value); // blyg target: origin REQUIRED
+  const web = typeof value.url === "string";
+  const blyg = isAbsoluteReference(value);
+  return web !== blyg && (value.cited === undefined || isCited(value.cited));
 }
 
 // ------------------------------------------------------- document validation
@@ -175,7 +188,7 @@ export function validateItemDocument(doc) {
  */
 export function validatePublisherItem(doc) {
   const errors = validateItemDocument(doc).errors.slice();
-  if (!Array.isArray(doc.changelog)) return { valid: false, errors };
+  if (!isPlainObject(doc) || !Array.isArray(doc.changelog)) return { valid: false, errors };
   const last = doc.changelog[doc.changelog.length - 1];
   if (last && doc.updated !== last.at) push(errors, "$.updated", "must equal the latest changelog entry's at (spec 5.2)");
   if (typeof doc.content_md === "string" && isContentHash(doc.content_hash)) {
@@ -186,7 +199,7 @@ export function validatePublisherItem(doc) {
     push(errors, "$.version", `version ${doc.version} must equal the changelog length ${expected}`);
   }
   doc.changelog.forEach((entry, i) => {
-    if (entry.version !== i + 1) push(errors, `$.changelog[${i}].version`, "changelog versions increment by exactly 1 from 1");
+    if (!isPlainObject(entry) || entry.version !== i + 1) push(errors, `$.changelog[${i}].version`, "changelog versions increment by exactly 1 from 1");
   });
   if (doc.kind === "withdrawn") {
     if ("transclusions" in doc && (!Array.isArray(doc.transclusions) || doc.transclusions.length !== 0)) {
@@ -213,11 +226,29 @@ export function changelogFromVersions(versions) {
   });
 }
 
-function copyReference(ref) {
-  const out = { id: ref.id, version: ref.version };
-  if (ref.origin !== undefined) out.origin = ref.origin;
-  if (ref.cited !== undefined) out.cited = ref.cited;
-  if (ref.selector !== undefined) out.selector = ref.selector;
+function pick(value, keys) {
+  const out = {};
+  for (const key of Object.keys(value)) if (keys.includes(key) && value[key] !== undefined) out[key] = structuredClone(value[key]);
+  return out;
+}
+
+export function copyReference(ref) {
+  const out = pick(ref, ["id", "version", "origin"]);
+  if (ref.cited !== undefined) out.cited = pick(ref.cited, ["source", "author", "excerpt", "url", "retrieved"]);
+  if (ref.selector !== undefined) out.selector = pick(ref.selector, ["exact", "prefix", "suffix"]);
+  return out;
+}
+
+export function copyStubOf(ref) {
+  if (typeof ref.url !== "string") return { origin: ref.origin, ...copyReference(ref) };
+  const out = { url: ref.url };
+  if (ref.cited !== undefined) out.cited = pick(ref.cited, ["source", "author", "excerpt", "url", "retrieved"]);
+  return out;
+}
+
+function copyGenerated(span) {
+  const out = { sources: span.sources.map((source) => pick(source, ["id", "version"])) };
+  Object.assign(out, pick(span, ["model", "at"]));
   return out;
 }
 
@@ -237,7 +268,7 @@ export function buildItemDocument(item) {
     origin: item.origin,
   };
   if (item.page !== undefined) doc.page = item.page;
-  if (item.author !== undefined) doc.author = item.author;
+  if (item.author !== undefined) doc.author = structuredClone(item.author);
   doc.created = item.createdAt;
   doc.updated = last.at;
   doc.version = last.version;
@@ -252,9 +283,9 @@ export function buildItemDocument(item) {
   doc.changelog = changelogFromVersions(item.versions);
   if (last.kind === "thread") doc.transclusions = (last.transclusions ?? []).map(copyReference);
   if (last.kind === "withdrawn" && item.kind === "thread") doc.transclusions = [];
-  if (last.stub_of !== undefined) doc.stub_of = last.stub_of;
-  if (item.forkedFrom !== undefined) doc.forked_from = { ...item.forkedFrom };
-  if (last.generated !== undefined && last.kind !== "withdrawn") doc.generated = last.generated;
+  if (last.stub_of !== undefined) doc.stub_of = copyStubOf(last.stub_of);
+  if (item.forkedFrom !== undefined) doc.forked_from = { origin: item.forkedFrom.origin, ...copyReference(item.forkedFrom) };
+  if (last.generated !== undefined && last.kind !== "withdrawn") doc.generated = last.generated.map(copyGenerated);
   return doc;
 }
 
@@ -281,14 +312,14 @@ export function buildPinnedDocument(item, version) {
     origin: item.origin,
   };
   if (item.page !== undefined) doc.page = item.page;
-  if (item.author !== undefined) doc.author = item.author;
+  if (item.author !== undefined) doc.author = structuredClone(item.author);
   doc.content_md = v.content_md;
   doc.content_html = v.content_html;
   doc.content_hash = v.content_hash;
   if (v.kind === "thread") doc.transclusions = (v.transclusions ?? []).map(copyReference);
-  if (v.stub_of !== undefined) doc.stub_of = v.stub_of;
-  if (item.forkedFrom !== undefined) doc.forked_from = { ...item.forkedFrom };
-  if (v.generated !== undefined) doc.generated = v.generated;
+  if (v.stub_of !== undefined) doc.stub_of = copyStubOf(v.stub_of);
+  if (item.forkedFrom !== undefined) doc.forked_from = { origin: item.forkedFrom.origin, ...copyReference(item.forkedFrom) };
+  if (v.generated !== undefined) doc.generated = v.generated.map(copyGenerated);
   return doc;
 }
 

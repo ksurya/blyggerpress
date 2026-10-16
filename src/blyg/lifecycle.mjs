@@ -31,10 +31,12 @@
 // releasing it.
 
 import { isValidId, newId } from "./ids.mjs";
-import { contentHash } from "./hash.mjs";
-import { normalizeMediaEntry, isValidMediaEntry } from "./media.mjs";
+import { contentHash, sha256HexOfBytes } from "./hash.mjs";
+import { normalizeMediaEntry, isValidMediaEntry, createMediaLedger } from "./media.mjs";
 import {
   AUTHORED_KINDS,
+  copyReference,
+  copyStubOf,
   isAbsoluteReference,
   isGeneratedSpan,
   isReference,
@@ -93,7 +95,7 @@ export function assertNoteDepth(priorVersions, note, { minRun = 40 } = {}) {
     if (v.pinned) continue; // fully public: nothing is withheld between pins
     const c = normalizeText(v.content_md);
     if (!c) continue;
-    if (c === n) throw new NoteDepthError(v.version, `the note for v${v.version + 1} restates v${v.version}'s withheld content verbatim`);
+    if (n.includes(c)) throw new NoteDepthError(v.version, `the note for v${v.version + 1} restates v${v.version}'s withheld content verbatim`);
     if (c.length < minRun) continue;
     for (let i = 0; i + minRun <= c.length; i++) {
       if (n.includes(c.slice(i, i + minRun))) {
@@ -113,15 +115,6 @@ const PAGE_PREFIX = { fragment: "f", thread: "t" };
 function defaultPageFor(kind, id) {
   const prefix = PAGE_PREFIX[kind] ?? "i";
   return `${prefix}/${id}/`;
-}
-
-// Allow-list copy of a reference: id/version required, origin/cited/selector optional.
-function copyReference(ref) {
-  const out = { id: ref.id, version: ref.version };
-  if (ref.origin !== undefined) out.origin = ref.origin;
-  if (ref.cited !== undefined) out.cited = deepCopy(ref.cited);
-  if (ref.selector !== undefined) out.selector = deepCopy(ref.selector);
-  return out;
 }
 
 function copyGenerated(span) {
@@ -149,6 +142,8 @@ export function createLifecycle(options = {}) {
     idFactory = newId,
     pageFor = defaultPageFor,
   } = options;
+
+  const mediaLedger = createMediaLedger({ origin, hashBytes: sha256HexOfBytes });
 
   const items = new Map(); // id -> item state
   const drafts = new Map(); // localId -> draft
@@ -228,13 +223,13 @@ export function createLifecycle(options = {}) {
       media: (init.media ?? []).map(normalizeMediaEntry),
       transclusions: kind === "thread" ? (init.transclusions ?? []).map(copyReference) : undefined,
       generated: init.generated?.map(copyGenerated),
-      stubOf: init.stubOf !== undefined ? deepCopy(init.stubOf) : undefined,
+      stubOf: init.stubOf !== undefined ? copyStubOf(init.stubOf) : undefined,
       note: init.note ?? null,
       noteGenerated: init.noteGenerated ?? false,
       createdAt: now,
       updatedAt: now,
       baseVersion: init.itemId ? latestVersion(requireItem(init.itemId)).version : 0,
-      forkedFrom: init.forkedFrom !== undefined ? deepCopy(init.forkedFrom) : undefined,
+      forkedFrom: init.forkedFrom !== undefined ? copyReference(init.forkedFrom) : undefined,
       page: init.page,
       author: init.author !== undefined ? deepCopy(init.author) : undefined,
     };
@@ -266,6 +261,7 @@ export function createLifecycle(options = {}) {
       stubOf: next.stubOf,
     });
     next.media = (next.media ?? []).map(normalizeMediaEntry);
+    if (next.stubOf !== undefined) next.stubOf = copyStubOf(next.stubOf);
     if (next.kind === "thread") next.transclusions = (next.transclusions ?? []).map(copyReference);
     if (next.generated !== undefined) next.generated = next.generated.map(copyGenerated);
     next.updatedAt = patch.updatedAt ?? clock();
@@ -340,12 +336,18 @@ export function createLifecycle(options = {}) {
       media: draft.media.map((m) => ({ ...m })),
     };
     if (item.kind === "thread") record.transclusions = (draft.transclusions ?? []).map(copyReference);
-    if (draft.generated !== undefined) record.generated = draft.generated.map(copyGenerated);
-    if (item.kind === "thread" && draft.stubOf !== undefined) record.stub_of = deepCopy(draft.stubOf);
+    if (draft.generated?.length) record.generated = draft.generated.map(copyGenerated);
+    if (item.kind === "thread" && draft.stubOf !== undefined) record.stub_of = copyStubOf(draft.stubOf);
     if (item.forkedFrom !== undefined) record.forkedFrom = deepCopy(item.forkedFrom);
 
     item.versions.push(record);
     selfCheck(item);
+    for (const entry of record.media) {
+      const media = mediaLedger.record(entry.url, item.origin);
+      if (!media?.digest || media.mime !== entry.mime) {
+        throw new LifecycleError(`register media byte evidence before publishing ${entry.url}`);
+      }
+    }
     items.set(item.id, item);
     draft.itemId = item.id;
     draft.baseVersion = version;
@@ -363,6 +365,7 @@ export function createLifecycle(options = {}) {
     const record = findVersion(item, version);
     if (!record) throw new LifecycleError(`item ${itemId} has no version ${version}`);
     if (record.kind === "withdrawn") throw new LifecycleError(`v${version} of ${itemId} is a withdrawal endcap and cannot be pinned (spec 8 rule 2)`);
+    for (const entry of record.media) mediaLedger.retain(entry.url, item.origin);
     record.pinned = true;
     return deepCopy(record);
   }
@@ -442,5 +445,8 @@ export function createLifecycle(options = {}) {
     listItems,
     isWithdrawn: (itemId) => isWithdrawn(requireItem(itemId)),
     hasItem: (itemId) => items.has(itemId),
+    // Asset bytes/digests are private adapter evidence, never item wire fields.
+    registerMedia: (entry, evidence) => mediaLedger.register(entry, evidence),
+    retainedMediaUrls: () => mediaLedger.retainedUrls(),
   };
 }

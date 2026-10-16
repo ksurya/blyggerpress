@@ -147,3 +147,9 @@ test("a partially-filled wedge: no item document before the first publish event"
   const item = { id: "1jt332depwffcsyfz9txf8c9r9", origin: "https://example.com/blyg/", createdAt: "2026-07-17T18:00:00Z", kind: "fragment", versions: [] };
   assert.throws(() => buildItemDocument(item), /first publish event/);
 });
+
+test("publisher validation rejects non-object input without throwing", () => {
+  for (const value of [null, undefined, 3, "item", []]) {
+    assert.equal(validatePublisherItem(value).valid, false);
+  }
+});

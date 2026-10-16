@@ -63,3 +63,22 @@ test('restored sparse draft IDs stay unique; pinned forks survive a fresh contro
  assert.equal(reloaded.state.publication.items.length,2);
  assert.match(reloaded.previewItem(event.itemId),/Original/); library.close();
 });
+
+test('first use keeps drafts and reading private until canonical publication setup', async () => {
+ const {library,studio} = await setup();
+ const draft = await studio.saveDraft(null,{contentMd:'Private **thought**'});
+ assert.equal(studio.state.publicationIdentity,undefined);
+ assert.match(studio.preview(draft),/<strong>thought<\/strong>/);
+ assert.doesNotMatch(studio.preview(draft),/Home|Archive/);
+ assert.throws(() => studio.publish(draft.localId),/publication URL/);
+ await assert.rejects(studio.exportFiles(),/publication URL/);
+ const reloaded = createStudio(library,await library.read());
+ assert.equal(reloaded.state.drafts[0].contentMd,'Private **thought**');
+ await reloaded.importFeed('https://feed.example/rss.xml','<rss version="2.0"><channel><title>Feed</title><link>https://feed.example/</link><description>Feed</description><item><guid>one</guid><description>Hello</description></item></channel></rss>');
+ assert.equal(reloaded.state.imported.length,1);
+ assert.equal(reloaded.state.publicationIdentity,undefined);
+ await reloaded.configure('https://example.com/','My publication');
+ await reloaded.publish(draft.localId);
+ assert.equal(reloaded.state.publication.items.length,1);
+ library.close();
+});

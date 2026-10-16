@@ -20,7 +20,7 @@ test('migrates v1 without changing source or private extensions; rejects invalid
   assert.deepEqual(state.drafts, fixture.drafts);
   assert.deepEqual(fixture, before);
   assert.deepEqual(migrateStore(state), state);
-  for (const value of [{}, { schemaVersion: 3 }, { ...fixture, notes: [{}] }, { ...fixture, drafts: null }, { ...fixture, publication: [] }]) {
+  for (const value of [{}, { schemaVersion: 3 }, { ...fixture, notes: [{}] }, { ...fixture, drafts: null }, { ...fixture, publication: [] }, { ...fixture, publication: null }]) {
     assert.throws(() => migrateStore(value));
   }
   assert.throws(() => migrateStore({ schemaVersion: 1, ranking: { weight: NaN } }));
@@ -86,7 +86,7 @@ test('stored v1 migrates once and failed migration preserves raw bytes', async (
   store.close(); store = await open(idb);
   assert.equal((await store.read()).revision, 8);
   store.close();
-  for (const invalid of [{ schemaVersion: 99 }, { schemaVersion: 1, subscriptions: [{}] }]) {
+  for (const invalid of [{ schemaVersion: 99 }, { schemaVersion: 1, subscriptions: [{}] }, { schemaVersion: 2, publication: null }]) {
     const broken = new IDBFactory();
     await seed(broken, invalid);
     await assert.rejects(open(broken));

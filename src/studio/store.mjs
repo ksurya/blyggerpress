@@ -24,7 +24,7 @@ export function migrateStore(input) {
   // v1 -> v2: materialize optional collections; retain all extension fields.
   for (const key of arrays) state[key] ??= [];
   state.ranking ??= {};
-  state.publication ??= { items: [], pins: [], events: [] };
+  if (!Object.hasOwn(state, 'publication')) state.publication = { items: [], pins: [], events: [] };
   if (!state.publication || typeof state.publication !== 'object' || Array.isArray(state.publication) ||
       ['items', 'pins', 'events'].some(key => !Array.isArray(state.publication[key]))) {
     throw new Error('Invalid publication state');

@@ -72,7 +72,7 @@ export function archiveRow(item) {
 export function archiveRows(items) {
   return items
     .map(archiveRow)
-    .sort((a, b) => (a.updated < b.updated ? 1 : a.updated > b.updated ? -1 : 0));
+    .sort((a, b) => Date.parse(b.updated) - Date.parse(a.updated) || a.id.localeCompare(b.id));
 }
 
 /**

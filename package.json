@@ -1,0 +1,14 @@
+{
+  "name": "blyggerpress",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A local-first studio for Blygger 0.3 blygs, and the shared contracts the rest of the project is built against.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "validate": "node tools/validate-fixtures.mjs"
+  }
+}

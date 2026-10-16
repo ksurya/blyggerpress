@@ -1,0 +1,14 @@
+{
+  "name": "blyggerpress",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Local-first Blygger 0.3 studio; shared contracts plus reader-side implementations.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.mjs\"",
+    "test:fixtures": "node tools/validate-fixtures.mjs"
+  }
+}

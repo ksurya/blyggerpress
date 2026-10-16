@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "blygpress:manifest",
+  "title": "Blygger manifest — blyg.json",
+  "description": "Reader-acceptance schema for the manifest (spec 6.1). The manifest filename is protocol-fixed; the mount is free (spec 4).",
+  "type": "object",
+  "required": ["blyg", "site", "title", "feed", "items", "updated"],
+  "properties": {
+    "blyg": { "$ref": "blygpress:common#/$defs/BlygKey" },
+    "level": { "$ref": "blygpress:common#/$defs/Level" },
+    "generator": { "type": "string", "description": "name/version; informative; readers MUST NOT gate on it (spec 3.2)." },
+    "generator_url": { "type": "string", "description": "One absolute URL to the client's source/home; informative (spec 6.1)." },
+    "site": { "type": "string", "description": "Self-asserted, display-advisory only; never establishes identity (spec 6.1, 12.2)." },
+    "title": { "type": "string" },
+    "author": {
+      "type": "object",
+      "description": "Publication identity (imprint), distinct from per-item author (byline) (spec 6.1).",
+      "properties": {
+        "name": { "type": "string" },
+        "bio": { "type": "string" },
+        "avatar": { "type": "string" },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["label", "url"],
+            "properties": { "label": { "type": "string" }, "url": { "type": "string" } },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "feed": { "type": "string" },
+    "items": { "type": "string" },
+    "blogroll": { "type": "string", "description": "OPTIONAL; present only when a non-empty blogroll is served (spec 6.1, 11)." },
+    "webmention": { "type": "string", "description": "OPTIONAL; present only when the publisher receives mentions (spec 6.1, 15.1)." },
+    "updated": { "$ref": "blygpress:common#/$defs/Iso8601Utc" }
+  },
+  "additionalProperties": true,
+  "x-emit-required": ["blyg", "level", "generator", "generator_url", "site", "title", "author", "feed", "items", "updated"],
+  "x-conformance": {
+    "spec": ["4", "6.1"],
+    "issue": "SUK-138",
+    "notes": [
+      "feed/items default to feed.xml and items/index.json when absent; a blyg that omits blogroll/webmention serves neither.",
+      "blogroll and webmention keys are present only when the corresponding surface is actually served."
+    ]
+  }
+}

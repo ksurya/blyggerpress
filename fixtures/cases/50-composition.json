@@ -1,0 +1,600 @@
+[
+  {
+    "id": "compose.grammar-directive",
+    "description": "A line consisting solely of `![[` + 26-char id + `]]` is a transclusion directive; elsewhere the sequence is inert text.",
+    "module": "blyg/compose",
+    "requirements": ["R10.1-1"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "10.1",
+    "given": "Source markdown with a directive on its own line and the same sequence inline.",
+    "expect": {
+      "outcome": "Only the standalone line parses as a directive; the inline occurrence stays inert text.",
+      "asserts": [
+        "A directive is a line consisting solely of ![[ + 26-char id + ]].",
+        "Inline occurrences are inert text.",
+        "The id must be a canonical 26-char Crockford base32 id."
+      ]
+    }
+  },
+  {
+    "id": "compose.grammar-code-inert",
+    "description": "A directive-looking sequence inside a code span or code block is inert text, never a directive.",
+    "module": "blyg/compose",
+    "requirements": ["R10.1-1"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "10.1",
+    "given": "Markdown containing ![[id]] inside an inline code span and inside a fenced code block.",
+    "expect": {
+      "outcome": "Both occurrences render as literal text; no transclusion is created.",
+      "asserts": [
+        "Code spans and code blocks suppress directive parsing.",
+        "No transclusion or mention is produced from code content.",
+        "The literal sequence is preserved verbatim."
+      ]
+    }
+  },
+  {
+    "id": "compose.grammar-partial",
+    "description": "A directive immediately followed, with no blank line, by a markdown blockquote is a partial transclusion; a blank line detaches it.",
+    "module": "blyg/compose",
+    "requirements": ["R10.1-2"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "10.1",
+    "given": "A directive directly above a blockquote, and a second directive separated from its blockquote by a blank line.",
+    "expect": {
+      "outcome": "The adjacent blockquote is a partial transclusion; the detached one is a full transclusion and the blockquote stands alone.",
+      "asserts": [
+        "Immediacy with no blank line marks the partial form.",
+        "A blank line detaches the directive from the blockquote.",
+        "The selection is the blockquote's text content."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/3ev1cjtw7c6q5y8cd0r7aj3bhc.json"]
+  },
+  {
+    "id": "compose.grammar-reserved-version",
+    "description": "`![[id@vN]]` is reserved: publishers MUST reject it at publish and readers MUST tolerate it as an unknown construct.",
+    "module": "blyg/compose",
+    "requirements": ["R10.1-3"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "10.1",
+    "given": "Source markdown containing a versioned directive ![[id@v2]].",
+    "expect": {
+      "outcome": "Publishing errors; a reader that encounters it wire-side ignores it as unknown rather than failing.",
+      "asserts": [
+        "Publishers reject ![[id@vN]] at publish time.",
+        "Readers tolerate a reserved construct as unknown.",
+        "The reserved form is never silently treated as a plain transclusion."
+      ]
+    }
+  },
+  {
+    "id": "compose.grammar-inline-link",
+    "description": "`[[id]]` is a plain internal link resolved at publish and rendered as an absolute anchor; it is silent on the wire.",
+    "module": "blyg/compose",
+    "requirements": ["R10.1-3", "R10.1-4"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "10.1",
+    "given": "Source markdown containing an inline [[id]] beside a reserved ![[id@v1]].",
+    "expect": {
+      "outcome": "The plain link resolves and renders as an absolute anchor with no wire construct; the reserved form is rejected.",
+      "asserts": [
+        "Plain links render as absolute anchors to the item's page.",
+        "They produce no transclusion, provenance or mention.",
+        "An unresolvable plain link is a publish error."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/3ev1cjtw7c6q5y8cd0r7aj3bhc.json"]
+  },
+  {
+    "id": "compose.inline-link-silent",
+    "description": "A plain [[id]] link is silent on the wire: no provenance, no mention, no relation.",
+    "module": "blyg/compose",
+    "requirements": ["R10.1-4"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "10.1",
+    "given": "A thread whose prose links an item with [[id]] but does not transclude it.",
+    "expect": {
+      "outcome": "The published document has only the rendered anchor; no transclusions entry and no outbound mention are created.",
+      "asserts": [
+        "No transclusions entry is produced for a plain link.",
+        "No Webmention is sent for a plain link.",
+        "Only a rendered anchor appears in content_html."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/3ev1cjtw7c6q5y8cd0r7aj3bhc.json"]
+  },
+  {
+    "id": "compose.resolution-order-local",
+    "description": "Directive resolution order: local-published first, else imported current or pin-retained, else publish error.",
+    "module": "blyg/compose",
+    "requirements": ["R10.2-1"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "10.2",
+    "given": "A directive whose id exists both locally (published) and among imported rows.",
+    "expect": {
+      "outcome": "The local-published snapshot is chosen and baked.",
+      "asserts": [
+        "Local-published resolves before imported.",
+        "The chosen version is the then-current local snapshot.",
+        "Imported matches are not consulted when a local match exists."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/3ev1cjtw7c6q5y8cd0r7aj3bhc.json"]
+  },
+  {
+    "id": "compose.resolution-order-imported",
+    "description": "With no local match, a directive resolves to the imported current version or a pin-retained snapshot.",
+    "module": "blyg/compose",
+    "requirements": ["R10.2-1"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "10.2",
+    "given": "A directive whose id exists only as an imported row (current) or as a pin-retained snapshot.",
+    "expect": {
+      "outcome": "The imported current/pin-retained snapshot is baked, never a live fetch.",
+      "asserts": [
+        "Imported-current or pin-retained is the second resolution tier.",
+        "The snapshot is baked locally, not fetched.",
+        "Drafts and L0 rows are never resolved."
+      ]
+    },
+    "artifacts": ["fixtures/store/sample-store.json"]
+  },
+  {
+    "id": "compose.resolution-ambiguous-error",
+    "description": "More than one imported match for a directive is a publish error (ambiguous).",
+    "module": "blyg/compose",
+    "requirements": ["R10.2-1"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "10.2",
+    "given": "A directive whose id matches two different imported origins.",
+    "expect": {
+      "outcome": "Publishing fails with an ambiguity error rather than picking one.",
+      "asserts": [
+        "More than one imported match is an error.",
+        "The publisher never guesses between origins.",
+        "The error names the ambiguous id."
+      ]
+    }
+  },
+  {
+    "id": "compose.resolution-none-error",
+    "description": "A directive that resolves nowhere is a publish error; drafts and L0 rows count as no match.",
+    "module": "blyg/compose",
+    "requirements": ["R10.2-1"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "10.2",
+    "given": "A directive whose id names only a draft or an L0 wrapper row.",
+    "expect": {
+      "outcome": "Publishing fails; the draft/L0 row is never baked into the published document.",
+      "asserts": [
+        "Drafts are invisible to the protocol and never resolve.",
+        "L0 rows are never transclusion sources.",
+        "An unresolved directive is a hard publish error."
+      ]
+    }
+  },
+  {
+    "id": "compose.bake-own-and-remote",
+    "description": "Baking: the local snapshot is baked (never live-fetched) as <blockquote class=\"blyg-transclusion\" data-blyg-id data-blyg-version>, with data-blyg-origin only for remote sources.",
+    "module": "blyg/compose",
+    "requirements": ["R10.2-2"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "10.2",
+    "given": "A thread transcluding an own-origin source and a remote source.",
+    "expect": {
+      "outcome": "Both are baked as blyg-transclusion blockquotes; only the remote one carries data-blyg-origin.",
+      "asserts": [
+        "The bake is a local snapshot, never a live fetch.",
+        "blyg-transclusion and its data-* attributes are permanent wire tokens.",
+        "data-blyg-origin appears only for remote sources."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/3ev1cjtw7c6q5y8cd0r7aj3bhc.json"]
+  },
+  {
+    "id": "compose.plain-web-target",
+    "description": "A plain-web transclusion target gets an ordinary markdown blockquote (no selector, no blyg-transclusion) and may carry a frozen cited label.",
+    "module": "blyg/compose",
+    "requirements": ["R10.2-4"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "10.2",
+    "given": "A quote of a plain web page that is not a blyg item.",
+    "expect": {
+      "outcome": "The blockquote is ordinary markdown, with no blyg-transclusion class or selector; a cited label may be frozen onto it.",
+      "asserts": [
+        "No blyg-transclusion class for a plain-web target.",
+        "No selector is produced.",
+        "A frozen cited label may accompany it."
+      ]
+    }
+  },
+  {
+    "id": "compose.snapshot-independence",
+    "description": "Later edits, withdrawal or pinning of a source do not change a thread's baked snapshot; transclusions[].version is provenance and there is no auto-pin.",
+    "module": "blyg/compose",
+    "requirements": ["R10.2-5", "R10.4-1"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "10.4",
+    "given": "A published thread whose transcluded source is later edited, withdrawn, or pinned.",
+    "expect": {
+      "outcome": "The thread's baked content is unchanged; no pin is created automatically.",
+      "asserts": [
+        "The baked snapshot is immutable against later source changes.",
+        "Publishing never depends on the network.",
+        "transclusions[].version is provenance; there is no auto-pin."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/3ev1cjtw7c6q5y8cd0r7aj3bhc.json"]
+  },
+  {
+    "id": "compose.closure-check",
+    "description": "A thread MUST NOT transclude a local thread whose transitive local transclusion closure contains its own id.",
+    "module": "blyg/compose",
+    "requirements": ["R10.2-5"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "10.2",
+    "given": "A thread attempting to transclude another local thread that (transitively) transcludes back to it.",
+    "expect": {
+      "outcome": "Publishing fails on the local transclusion closure cycle.",
+      "asserts": [
+        "The local transclusion closure is computed before publish.",
+        "A cycle back to the thread's own id is a publish error.",
+        "Remote transclusions do not participate in the local closure check."
+      ]
+    }
+  },
+  {
+    "id": "compose.republish-reresolve",
+    "description": "Republishing re-resolves every directive to the then-current local snapshot; a source withdrawn and not pin-retained is a publish error on republish.",
+    "module": "blyg/compose",
+    "requirements": ["R10.2-6"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "10.2",
+    "given": "A draft of a thread whose previously transcluded source has since been withdrawn without a retained pin.",
+    "expect": {
+      "outcome": "Republish re-resolves all directives and fails on the missing source.",
+      "asserts": [
+        "Every directive re-resolves against the then-current snapshots.",
+        "A withdrawn, non-retained source is a publish error.",
+        "A pin-retained snapshot would resolve successfully."
+      ]
+    }
+  },
+  {
+    "id": "compose.source-not-transclusion",
+    "description": "A generation source is not a transclusion: source references never appear in transclusions and never produce a blyg-transclusion blockquote.",
+    "module": "blyg/compose",
+    "requirements": ["R5.7-3"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "5.7",
+    "given": "A thread with a generated span listing an own-origin source in its generated array.",
+    "expect": {
+      "outcome": "The source appears only in generated[].sources; no transclusions entry or blockquote is produced for it.",
+      "asserts": [
+        "generated[].sources never appear in transclusions.",
+        "No blyg-transclusion blockquote is produced for a source.",
+        "The generated span wraps only the machine-generated prose."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/3ev1cjtw7c6q5y8cd0r7aj3bhc.json"]
+  },
+  {
+    "id": "compose.lineage-immutable",
+    "description": "An id is permanent identity and forked_from lineage is immutable: no construct may add, retarget or clear it after creation.",
+    "module": "blyg/reference",
+    "requirements": ["R5.1-2", "R5.6-1"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "5.6",
+    "given": "A published fork, then an attempt to edit, retarget or clear forked_from in a later draft.",
+    "expect": {
+      "outcome": "The id never changes and the lineage is refused: it can neither be added, retargeted nor cleared after creation.",
+      "asserts": [
+        "Ids are permanent across versions, withdrawal and return.",
+        "forked_from is immutable after creation.",
+        "The referenced version named by forked_from is pinned."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/0ff73f8ranqzaf0b2n3qpxxzd7.json"]
+  },
+  {
+    "id": "compose.fork-flatten",
+    "description": "A fork copies the pinned document, not its composition: the blyg-transclusion class MUST NOT survive and inherited [[id]] links flatten to ordinary markdown links.",
+    "module": "blyg/compose",
+    "requirements": ["R5.6-4", "R5.7-7"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "5.6",
+    "given": "A fork of a pinned remote fragment whose prose contains a transclusion and an internal link.",
+    "expect": {
+      "outcome": "The fork's own content is the byte-exact source prose plus a flattened blockquote; no blyg-transclusion class survives.",
+      "asserts": [
+        "The byte-exact pinned source prose is copied.",
+        "Inherited transclusions flatten to an ordinary markdown blockquote.",
+        "Publishers disclose spans they know are machine-generated."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/0ff73f8ranqzaf0b2n3qpxxzd7.json"]
+  },
+  {
+    "id": "compose.fork-custody-one-hop",
+    "description": "Custody runs one hop per fork; nothing carries verification through a chain of forks.",
+    "module": "blyg/compose",
+    "requirements": ["R5.6-6"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "5.6",
+    "given": "A fork of a fork: A forked from B, and B itself was forked from a remote C.",
+    "expect": {
+      "outcome": "A's lineage names B's pinned version only; no transitive custody of C is claimed.",
+      "asserts": [
+        "forked_from names exactly one pinned version.",
+        "Custody is one hop; it does not chain.",
+        "No construct carries a claim about the chain's origin."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/0ff73f8ranqzaf0b2n3qpxxzd7.json"]
+  },
+  {
+    "id": "compose.stub-url-target",
+    "description": "A stub_of is either a blyg reference (origin REQUIRED) or a plain-web {url} target; either MAY carry cited.",
+    "module": "blyg/compose",
+    "requirements": ["R10.6-2"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "10.6",
+    "given": "A stub thread whose stub_of is the plain-web {url} shape.",
+    "expect": {
+      "outcome": "The {url} shape is accepted with an optional cited label; the blyg shape requires origin.",
+      "asserts": [
+        "The plain-web shape is {url} with optional cited.",
+        "The blyg shape requires origin.",
+        "stub_of names exactly one target; other transclusions are quotes."
+      ]
+    }
+  },
+  {
+    "id": "compose.cited-not-verified",
+    "description": "cited is self-asserted and frozen: it MUST NOT be presented as verified or current, and is never baked into content_html; importers retain it verbatim.",
+    "module": "blyg/reference",
+    "requirements": ["R5.9-3"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "5.9",
+    "given": "A stub whose stub_of carries a cited label frozen at creation time.",
+    "expect": {
+      "outcome": "The cited label is carried verbatim in the reference and never appears in content_html or as a verified claim.",
+      "asserts": [
+        "cited requires retrieved and is self-asserted.",
+        "It MUST NOT be baked into content_html.",
+        "Importers retain it verbatim and never re-derive it."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/7jbfafqm50v2w8xd9hkxz3yesh.json"]
+  },
+  {
+    "id": "compose.no-feed-vocabulary",
+    "description": "Stubs and lineage add no feed vocabulary; a stub is a thread and appears as one; any prepended citation line is presentation only.",
+    "module": "blyg/feed",
+    "requirements": ["R7-9", "R10.6-6"],
+    "issue": "SUK-138",
+    "check": "spec",
+    "spec": "7",
+    "given": "A blyg feed containing a stub thread and a fork.",
+    "expect": {
+      "outcome": "The feed has no stub/lineage elements; the stub appears as an ordinary thread entry and any citation line is outside content_html.",
+      "asserts": [
+        "No blyg:* element is introduced for stubs or lineage.",
+        "A stub thread contributes an ordinary thread entry.",
+        "A prepended citation/lineage line is presentation, not content."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/feed.xml"]
+  },
+  {
+    "id": "compose.withdrawal-no-cascade",
+    "description": "Withdrawal does not cascade: a thread keeps its snapshot, a stub of a withdrawn item stays published, and a withdrawn stub should re-send its mention once.",
+    "module": "blyg/compose",
+    "requirements": ["R9-5"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "9",
+    "given": "A source item withdrawn after being transcluded in a thread and stubbed by another blyg.",
+    "expect": {
+      "outcome": "Neither the thread nor the stub is withdrawn; a withdrawn stub re-sends its mention once so the receiver marks it gone.",
+      "asserts": [
+        "Withdrawal does not cascade to transcluders.",
+        "A stub of a withdrawn item stays published.",
+        "A withdrawn stub re-sends its mention once."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/7jbfafqm50v2w8xd9hkxz3yesh.json"]
+  },
+  {
+    "id": "compose.note-depth",
+    "description": "A changelog note MUST NOT reproduce withheld (unpinned) prior content.",
+    "module": "blyg/item",
+    "requirements": ["R5.2-4"],
+    "issue": "SUK-137",
+    "check": "spec",
+    "spec": "5.2",
+    "given": "A multi-version item in which earlier versions are unpinned and withheld.",
+    "expect": {
+      "outcome": "Notes describe the event without quoting the withheld earlier content.",
+      "asserts": [
+        "The changelog is metadata, never a diff or content.",
+        "A note never reproduces withheld unpinned content.",
+        "Only the latest version's content is served."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/1jt332depwffcsyfz9txf8c9r9.json"]
+  },
+  {
+    "id": "media-immutability",
+    "description": "Media objects are immutable once published: a media URL always serves the same bytes, and media referenced by any pinned version is retained forever.",
+    "module": "blyg/media",
+    "requirements": ["R5.4-2", "R8-4"],
+    "issue": "SUK-137",
+    "check": "spec",
+    "spec": "5.4",
+    "given": "An item referencing media/x7f2.png in content_html and a media[] entry pointing at the same origin-relative URL.",
+    "expect": {
+      "outcome": "The media URL is treated as immutable; content_html uses the absolute URL while media[].url stays origin-relative; pinned documents carry no media array.",
+      "asserts": [
+        "A media URL always serves the same bytes once published.",
+        "content_html uses absolute media URLs; media[].url stays origin-relative.",
+        "Media referenced by a pinned version is retained forever."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/6y1e4khfxxckyd9dhwgrtv2dj4.json"]
+  },
+  {
+    "id": "page-stability",
+    "description": "page SHOULD be stable for the life of the item; a publisher forced to move it SHOULD serve a redirect.",
+    "module": "blyg/export",
+    "requirements": ["R5.8-4"],
+    "issue": "SUK-138",
+    "check": "spec",
+    "spec": "5.8",
+    "given": "An item with a page value, and a publisher that must move the page for a deployment reason.",
+    "expect": {
+      "outcome": "The page URL stays stable; a forced move is accompanied by a redirect from the old URL.",
+      "asserts": [
+        "page is stable for the life of the item.",
+        "A moved page serves a redirect.",
+        "A withdrawn item's page is 200 forever."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/1jt332depwffcsyfz9txf8c9r9.json"]
+  },
+  {
+    "id": "render.title-not-extracted",
+    "description": "Items are titleless: readers MUST NOT extract a title from content, and any feed <title> MUST NOT be read back as an item field.",
+    "module": "blyg/render",
+    "requirements": ["R5.3-4", "R7-5"],
+    "issue": "SUK-138",
+    "check": "spec",
+    "spec": "5.3",
+    "given": "An item whose content_md begins with a markdown heading and a feed entry carrying a derived <title>.",
+    "expect": {
+      "outcome": "No title is extracted from the content, and the feed <title> is not stored back onto the item.",
+      "asserts": [
+        "Items are titleless.",
+        "Readers MUST NOT derive a title from content.",
+        "A feed title is presentation and never an item field."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/3ev1cjtw7c6q5y8cd0r7aj3bhc.json"]
+  },
+  {
+    "id": "render.fork-lineage",
+    "description": "A fork's HTML page SHOULD show its lineage, linking the pinned version it names.",
+    "module": "blyg/render",
+    "requirements": ["R5.6-5"],
+    "issue": "SUK-138",
+    "check": "spec",
+    "spec": "5.6",
+    "given": "The fork F whose forked_from names the remote pinned fragment R1 v1.",
+    "expect": {
+      "outcome": "F's permalink page shows a lineage link to the named pinned version.",
+      "asserts": [
+        "The lineage link points at the referenced pinned version.",
+        "Lineage is presentation, not part of content_html.",
+        "The link names the origin, id and version."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/0ff73f8ranqzaf0b2n3qpxxzd7.json"]
+  },
+  {
+    "id": "render.generated-span",
+    "description": "The renderer wraps each generated span as <span class=\"blyg-tk-gen\"> or <div class=\"blyg-tk-gen\">; the class name is a permanent wire token.",
+    "module": "blyg/render",
+    "requirements": ["R5.7-8"],
+    "issue": "SUK-141",
+    "check": "spec",
+    "spec": "5.7",
+    "given": "The thread T whose published content_html wraps its machine-generated prose in a blyg-tk-gen element.",
+    "expect": {
+      "outcome": "The generated span is wrapped exactly with the permanent blyg-tk-gen class.",
+      "asserts": [
+        "The wrapper class is exactly blyg-tk-gen.",
+        "blyg-tk-gen is a permanent wire token.",
+        "The wrapper surrounds only the generated prose."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/3ev1cjtw7c6q5y8cd0r7aj3bhc.json"]
+  },
+  {
+    "id": "render.pinned-page",
+    "description": "Optional pinned pages are gated exactly like the JSON and are not publish events: they MUST NOT appear in the feed or archive index and readers MUST NOT require them.",
+    "module": "blyg/render",
+    "requirements": ["R8.4-2"],
+    "issue": "SUK-138",
+    "check": "spec",
+    "spec": "8.4",
+    "given": "The optional pinned page f/{id}/v2/index.html beside the pinned JSON.",
+    "expect": {
+      "outcome": "The pinned page is not in the feed or index, is gated like the JSON, and is optional to readers.",
+      "asserts": [
+        "Pinned pages never appear in the feed or archive index.",
+        "They are gated exactly like the pinned JSON.",
+        "Readers MUST NOT require pinned pages to exist."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/f/1jt332depwffcsyfz9txf8c9r9/v2/index.html"]
+  },
+  {
+    "id": "render.feed-page",
+    "description": "The HTML feed page carries <link rel=\"blogroll\"> and <link rel=\"webmention\"> when the corresponding surfaces exist.",
+    "module": "blyg/render",
+    "requirements": ["R11-3", "R15.1-2"],
+    "issue": "SUK-138",
+    "check": "spec",
+    "spec": "11",
+    "given": "The sample blyg whose manifest advertises a blogroll and a webmention endpoint.",
+    "expect": {
+      "outcome": "The feed page carries the blogroll and webmention link elements; the endpoint is announced in a Link header where possible.",
+      "asserts": [
+        "A rel=blogroll link is emitted when the blogroll is advertised.",
+        "A rel=webmention link is emitted when mentions are accepted.",
+        "The endpoint may also be announced in an HTTP Link header."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/index.html", "fixtures/wire/sample-blyg/blogroll.opml"]
+  },
+  {
+    "id": "render.curation-list",
+    "description": "A client MAY display imported content publicly as curation with attribution and links, without any protocol surface; displayed copies follow spec 13.4 on withdrawal.",
+    "module": "blyg/render",
+    "requirements": ["R13.5-2"],
+    "issue": "SUK-138",
+    "check": "spec",
+    "spec": "13.5",
+    "given": "A studio that curates an imported item on a public page outside the blyg surface.",
+    "expect": {
+      "outcome": "The curation carries attribution and links, exposes no protocol surface, and is removed/updated on withdrawal per spec 13.4.",
+      "asserts": [
+        "Curation is presentation outside the blyg surface.",
+        "Attribution and a link to the source are required.",
+        "A withdrawn source's displayed copy follows spec 13.4."
+      ]
+    }
+  }
+]

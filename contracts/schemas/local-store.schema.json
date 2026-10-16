@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "blygpress:local-store",
+  "title": "Local-first private store (NEVER published)",
+  "description": "The studio's private persistence model: drafts, notes, interests, feedback, ranking, subscriptions, imported items, watermarks, mentions, publish targets, and credential metadata. This entire schema is PRIVATE. Nothing here may appear in any publication artifact (manifest, item document, feed, index, blogroll, pinned file, rendered page). Only the wire schemas are publishable. See contracts/README.md for the fail-closed export boundary.",
+  "type": "object",
+  "required": ["schemaVersion"],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "publicationIdentity": {
+      "type": "object",
+      "description": "Publisher's own origin + manifest metadata used to build the publication surface.",
+      "properties": {
+        "origin": { "type": "string" },
+        "title": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "drafts": { "type": "array", "items": { "$ref": "#/$defs/Draft" } },
+    "notes": { "type": "array", "items": { "$ref": "#/$defs/Note" } },
+    "feedback": { "type": "array", "items": { "$ref": "#/$defs/Feedback" } },
+    "ranking": { "$ref": "#/$defs/RankingProfile" },
+    "subscriptions": { "type": "array", "items": { "$ref": "#/$defs/Subscription" } },
+    "imported": { "type": "array", "items": { "$ref": "#/$defs/ImportedItem" } },
+    "outboundMentions": { "type": "array", "items": { "$ref": "blygpress:webmention#/$defs/OutboundRecord" } },
+    "inboundMentions": { "type": "array", "items": { "$ref": "blygpress:webmention#/$defs/VerificationResult" } },
+    "publishTargets": { "type": "array", "items": { "$ref": "#/$defs/PublishTarget" } },
+    "credentials": {
+      "type": "object",
+      "description": "Credential METADATA only. Secret material lives in session/OS storage and is never serialized here or in any backup that might be published. Backup/restore excludes this by default.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "provider": { "type": "string" },
+          "configured": { "type": "boolean" },
+          "storage": { "type": "string", "enum": ["session", "os-keychain", "encrypted-blob"] }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "Draft": {
+      "type": "object",
+      "description": "Authoring state. Draft saves are invisible to the protocol (spec 5.2).",
+      "required": ["localId", "kind", "contentMd", "createdAt", "updatedAt"],
+      "properties": {
+        "localId": { "type": "string" },
+        "itemId": { "type": ["string", "null"], "description": "Set once the draft corresponds to a published item id." },
+        "kind": { "type": "string", "enum": ["fragment", "thread"] },
+        "baseVersion": { "type": "integer", "minimum": 0, "description": "Published version this draft was derived from; 0 for new." },
+        "contentMd": { "type": "string" },
+        "note": { "type": ["string", "null"] },
+        "generated": { "type": "boolean" },
+        "createdAt": { "$ref": "blygpress:common#/$defs/Iso8601Utc" },
+        "updatedAt": { "$ref": "blygpress:common#/$defs/Iso8601Utc" },
+        "authoringState": { "type": "object", "description": "Studio-private generation instructions etc. MUST NEVER reach the wire (spec 5.7 rule 2).", "additionalProperties": true }
+      },
+      "additionalProperties": true
+    },
+    "Note": {
+      "type": "object",
+      "description": "Private per-post note (reader). Never published (spec 13.5; MVP privacy boundary).",
+      "required": ["targetKey", "text", "at"],
+      "properties": {
+        "targetKey": { "type": "string", "description": "origin + '#' + id, origin-scoped (spec 13.1)." },
+        "text": { "type": "string" },
+        "at": { "$ref": "blygpress:common#/$defs/Iso8601Utc" }
+      },
+      "additionalProperties": true
+    },
+    "Feedback": {
+      "type": "object",
+      "description": "Private like/dislike for ranking. Never published.",
+      "required": ["targetKey", "value", "at"],
+      "properties": {
+        "targetKey": { "type": "string" },
+        "value": { "type": "string", "enum": ["like", "dislike"] },
+        "at": { "$ref": "blygpress:common#/$defs/Iso8601Utc" }
+      },
+      "additionalProperties": true
+    },
+    "Interest": {
+      "type": "object",
+      "required": ["text"],
+      "properties": {
+        "text": { "type": "string" },
+        "weight": { "type": "number" }
+      },
+      "additionalProperties": true
+    },
+    "RankingProfile": {
+      "type": "object",
+      "description": "Private Decision Model inputs (spec-external; SUK-145). Never published.",
+      "properties": {
+        "intent": { "type": "string" },
+        "interests": { "type": "array", "items": { "$ref": "#/$defs/Interest" } },
+        "updatedAt": { "$ref": "blygpress:common#/$defs/Iso8601Utc" }
+      },
+      "additionalProperties": true
+    },
+    "Subscription": {
+      "type": "object",
+      "description": "A reader's persistent relationship; identity is the final fetch origin (spec 12.2).",
+      "required": ["id", "mode", "identityOrigin", "addedAt"],
+      "properties": {
+        "id": { "type": "string" },
+        "mode": { "type": "string", "enum": ["blyg", "legacy"] },
+        "identityOrigin": { "type": "string", "description": "For blyg: post-redirect base URL minus blyg.json. For legacy: the feed URL." },
+        "manifestUrl": { "type": ["string", "null"] },
+        "feedUrl": { "type": ["string", "null"] },
+        "title": { "type": "string" },
+        "blogrollVisible": { "type": "boolean", "description": "Opt-in; default excluded (spec 11)." },
+        "lossy": { "type": "boolean", "description": "Set when items/index.json 404s (spec 13.2)." },
+        "etag": { "type": ["string", "null"] },
+        "lastModified": { "type": ["string", "null"] },
+        "backoffUntil": { "type": ["string", "null"] },
+        "lastPolledAt": { "type": ["string", "null"] },
+        "addedAt": { "$ref": "blygpress:common#/$defs/Iso8601Utc" }
+      },
+      "additionalProperties": true
+    },
+    "ImportedItem": {
+      "type": "object",
+      "description": "Origin-scoped imported item with its watermark (spec 13.1, 13.3, 13.4, 13.6).",
+      "required": ["origin", "id", "kind", "version", "watermark", "observedAt"],
+      "properties": {
+        "origin": { "type": "string" },
+        "id": { "type": "string" },
+        "kind": { "type": "string" },
+        "version": { "type": "integer", "minimum": 1 },
+        "updated": { "$ref": "blygpress:common#/$defs/Iso8601Utc" },
+        "contentHash": { "type": "string" },
+        "contentHtml": { "type": "string" },
+        "contentMd": { "type": ["string", "null"] },
+        "author": { "$ref": "blygpress:common#/$defs/Author" },
+        "page": { "type": "string" },
+        "media": { "type": "array", "items": { "$ref": "blygpress:common#/$defs/MediaEntry" } },
+        "retainedPinnedVersion": { "type": ["integer", "null"], "description": "Set only when retention follows a pin (spec 13.4)." },
+        "l0": { "type": "boolean", "description": "True for a legacy RSS wrapper row; synthetic id; never a transclusion source (spec 13.6)." },
+        "watermark": { "type": "integer", "minimum": 1, "description": "Monotonic highest version ever observed (spec 13.3)." },
+        "observedAt": { "$ref": "blygpress:common#/$defs/Iso8601Utc" },
+        "discrepancies": {
+          "type": "array",
+          "description": "Loud, non-fatal signals: version regression, stealth edit, hash mismatch (spec 13.3).",
+          "items": {
+            "type": "object",
+            "required": ["type", "at"],
+            "properties": {
+              "type": { "type": "string", "enum": ["version-regression", "stealth-edit", "hash-mismatch"] },
+              "at": { "$ref": "blygpress:common#/$defs/Iso8601Utc" },
+              "detail": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "PublishTarget": {
+      "type": "object",
+      "description": "GitHub publishing target; never published as content (SUK-143).",
+      "required": ["id", "provider", "repo"],
+      "properties": {
+        "id": { "type": "string" },
+        "provider": { "type": "string", "enum": ["github"] },
+        "repo": { "type": "string" },
+        "branch": { "type": "string" },
+        "basePath": { "type": "string" },
+        "siteUrl": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    }
+  },
+  "x-publication": false,
+  "x-conformance": {
+    "spec": ["12", "13", "13.1", "13.2", "13.3", "13.4", "13.5", "13.6", "13.7"],
+    "issue": "SUK-136",
+    "notes": [
+      "Entire schema is private; keeps drafts, notes, interests, feedback and credentials out of publication output.",
+      "Imported items are origin-scoped and never re-emitted (spec 13.1, 13.5).",
+      "Retention follows pins only; unpinned withdrawn content is deleted (spec 13.4)."
+    ]
+  }
+}

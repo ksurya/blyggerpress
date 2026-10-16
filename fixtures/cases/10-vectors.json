@@ -1,0 +1,277 @@
+[
+  {
+    "id": "vector.id.encode-zero",
+    "description": "128 zero bits encode to 26 Crockford base32 zeros (spec 5.1).",
+    "module": "blyg/ids",
+    "requirements": ["R5.1-1"],
+    "issue": "SUK-137",
+    "check": "vector",
+    "fn": "oracle.crockfordEncodeHex",
+    "args": ["00000000000000000000000000000000"],
+    "expect": { "result": "00000000000000000000000000" }
+  },
+  {
+    "id": "vector.id.encode-max",
+    "description": "128 one-bits encode to 26 chars, the top two bits zero (spec 5.1).",
+    "module": "blyg/ids",
+    "requirements": ["R5.1-1"],
+    "issue": "SUK-137",
+    "check": "vector",
+    "fn": "oracle.crockfordEncodeHex",
+    "args": ["ffffffffffffffffffffffffffffffff"],
+    "expect": { "result": "7zzzzzzzzzzzzzzzzzzzzzzzzz" }
+  },
+  {
+    "id": "vector.id.decode-roundtrip",
+    "description": "A canonical 26-char id decodes back to its 16 bytes (spec 5.1).",
+    "module": "blyg/ids",
+    "requirements": ["R5.1-1"],
+    "issue": "SUK-137",
+    "check": "vector",
+    "fn": "oracle.crockfordDecodeHex",
+    "args": ["1jt332depwffcsyfz9txf8c9r9"],
+    "expect": { "result": "32d0c626badc7bd99f3fe9d75e862709" }
+  },
+  {
+    "id": "vector.id.valid",
+    "description": "The canonical alphabet excludes i, l, o and u (spec 5.1).",
+    "module": "blyg/ids",
+    "requirements": ["R5.1-1"],
+    "issue": "SUK-137",
+    "check": "vector",
+    "fn": "oracle.isValidId",
+    "args": ["1jt332depwffcsyfz9txf8c9r9"],
+    "expect": { "result": true }
+  },
+  {
+    "id": "vector.id.invalid-excluded-char",
+    "description": "A 26-char id containing an excluded letter is invalid (spec 5.1).",
+    "module": "blyg/ids",
+    "requirements": ["R5.1-1"],
+    "issue": "SUK-137",
+    "check": "vector",
+    "fn": "oracle.isValidId",
+    "args": ["1jt332depwffcsyfz9txf8c9r9i"],
+    "expect": { "result": false }
+  },
+  {
+    "id": "vector.hash.content",
+    "description": "content_hash is sha256: + hex(SHA-256(content_md)) (spec 5.1).",
+    "module": "blyg/hash",
+    "requirements": ["R5.1-3"],
+    "issue": "SUK-137",
+    "check": "vector",
+    "fn": "oracle.contentHash",
+    "args": ["Markdown source of the *latest* version."],
+    "expect": { "result": "sha256:8399113ac7ca4b73410a45fe1117e00d9936134f04147879592d3884a6ec7537" }
+  },
+  {
+    "id": "vector.hash.empty",
+    "description": "The empty-string hash used by withdrawal endcaps (spec 9).",
+    "module": "blyg/hash",
+    "requirements": ["R5.1-3", "R9-1"],
+    "issue": "SUK-137",
+    "check": "vector",
+    "fn": "oracle.contentHash",
+    "args": [""],
+    "expect": { "result": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" }
+  },
+  {
+    "id": "vector.rfc822.saturday",
+    "description": "Feed dates are RFC 822 (spec 4, 7).",
+    "module": "blyg/feed",
+    "requirements": ["R4-8", "R7-12"],
+    "issue": "SUK-138",
+    "check": "vector",
+    "fn": "oracle.rfc822",
+    "args": ["2026-07-18T09:30:00Z"],
+    "expect": { "result": "Sat, 18 Jul 2026 09:30:00 GMT" }
+  },
+  {
+    "id": "vector.rfc822.monday",
+    "description": "Day-of-week and month are derived from the UTC instant (spec 4).",
+    "module": "blyg/feed",
+    "requirements": ["R4-8", "R7-12"],
+    "issue": "SUK-138",
+    "check": "vector",
+    "fn": "oracle.rfc822",
+    "args": ["2026-07-20T10:00:00Z"],
+    "expect": { "result": "Mon, 20 Jul 2026 10:00:00 GMT" }
+  },
+  {
+    "id": "vector.text-content.blocks",
+    "description": "Text content: tags stripped, whitespace collapsed within a block, block boundaries kept as line breaks (spec 2, 10.2).",
+    "module": "blyg/markdown",
+    "requirements": ["R10.2-3"],
+    "issue": "SUK-141",
+    "check": "vector",
+    "fn": "oracle.textContent",
+    "args": [
+      "<blockquote class=\"blyg-transclusion\" data-blyg-id=\"7gvp7ms7wq4nks6erdbbdp8cqc\" data-blyg-version=\"1\"><p>Remote fragment content.</p></blockquote>\n<p>Stigmergy is what a protocol looks like from inside, and the reason it looks like nothing at all is the point.</p>"
+    ],
+    "expect": {
+      "result": "Remote fragment content.\nStigmergy is what a protocol looks like from inside, and the reason it looks like nothing at all is the point."
+    }
+  },
+  {
+    "id": "vector.partial.selection-substring",
+    "description": "A partial transclusion's selection MUST be a substring of the target's text content at publish (spec 10.2).",
+    "module": "blyg/compose",
+    "requirements": ["R10.2-3"],
+    "issue": "SUK-141",
+    "check": "vector",
+    "fn": "oracle.selectionIsSubstring",
+    "args": [
+      "Stigmergy is what a protocol looks like from inside",
+      "<p>Stigmergy is what a protocol looks like from inside, and the reason it looks like nothing at all is the point.</p>"
+    ],
+    "expect": { "result": true }
+  },
+  {
+    "id": "vector.partial.selection-not-substring",
+    "description": "A selection that is not present in the target is a publish error (spec 10.2).",
+    "module": "blyg/compose",
+    "requirements": ["R10.2-3"],
+    "issue": "SUK-141",
+    "check": "vector",
+    "fn": "oracle.selectionIsSubstring",
+    "args": [
+      "This sentence was never in the source",
+      "<p>Stigmergy is what a protocol looks like from inside, and the reason it looks like nothing at all is the point.</p>"
+    ],
+    "expect": { "result": false }
+  },
+  {
+    "id": "vector.rfc6570.item-template",
+    "description": "The 0.4 item template's level-1 expansion (room left; not emitted at 0.3) (spec 16.6e).",
+    "module": "blyg/export",
+    "requirements": ["R4-2"],
+    "issue": "SUK-138",
+    "check": "vector",
+    "fn": "oracle.rfc6570Expand",
+    "args": ["items/{id}.json", { "id": "abc123" }],
+    "expect": { "result": "items/abc123.json" }
+  },
+  {
+    "id": "vector.rfc6570.pin-template",
+    "description": "The 0.4 pin template's level-1 expansion (spec 16.6e).",
+    "module": "blyg/export",
+    "requirements": ["R4-2"],
+    "issue": "SUK-138",
+    "check": "vector",
+    "fn": "oracle.rfc6570Expand",
+    "args": ["items/{id}/v{n}.json", { "id": "abc123", "n": 2 }],
+    "expect": { "result": "items/abc123/v2.json" }
+  },
+  {
+    "id": "vector.rfc6570.missing-variable",
+    "description": "Expanding a template with a missing variable is an error.",
+    "module": "blyg/export",
+    "requirements": ["R4-2"],
+    "issue": "SUK-138",
+    "check": "vector",
+    "fn": "oracle.rfc6570Expand",
+    "args": ["items/{missing}.json", {}],
+    "expect": { "error": true }
+  },
+  {
+    "id": "vector.origin.normalize",
+    "description": "Identity comparison drops the default port and normalizes scheme/host case and trailing slash (spec 12.2, 15.4).",
+    "module": "blyg/reference",
+    "requirements": ["R12.2-1", "R15.4-5"],
+    "issue": "SUK-144",
+    "check": "vector",
+    "fn": "oracle.normalizeOrigin",
+    "args": ["HTTPS://Example.COM:443/blyg"],
+    "expect": { "result": "https://example.com/blyg/" }
+  },
+  {
+    "id": "vector.reference.equal",
+    "description": "Two references are equal when origin (normalized), id and version all match (spec 5.9).",
+    "module": "blyg/reference",
+    "requirements": ["R5.9-1", "R5.9-2"],
+    "issue": "SUK-141",
+    "check": "vector",
+    "fn": "oracle.referencesEqual",
+    "args": [
+      { "origin": "HTTPS://Example.com/blyg/", "id": "1jt332depwffcsyfz9txf8c9r9", "version": 1 },
+      { "origin": "https://example.com/blyg/", "id": "1jt332depwffcsyfz9txf8c9r9", "version": 1 }
+    ],
+    "expect": { "result": true }
+  },
+  {
+    "id": "vector.reference.version-differs",
+    "description": "References naming different versions are not equal (spec 5.9).",
+    "module": "blyg/reference",
+    "requirements": ["R5.9-2"],
+    "issue": "SUK-141",
+    "check": "vector",
+    "fn": "oracle.referencesEqual",
+    "args": [
+      { "origin": "https://example.com/blyg/", "id": "1jt332depwffcsyfz9txf8c9r9", "version": 1 },
+      { "origin": "https://example.com/blyg/", "id": "1jt332depwffcsyfz9txf8c9r9", "version": 2 }
+    ],
+    "expect": { "result": false }
+  },
+  {
+    "id": "vector.staleness.stale",
+    "description": "A reference is stale when the target document's version is higher (spec 5.9, 10.4).",
+    "module": "blyg/reference",
+    "requirements": ["R5.9-2", "R10.4-2"],
+    "issue": "SUK-141",
+    "check": "vector",
+    "fn": "oracle.isStale",
+    "args": [
+      { "id": "1jt332depwffcsyfz9txf8c9r9", "version": 1, "origin": "https://example.com/blyg/" },
+      { "id": "1jt332depwffcsyfz9txf8c9r9", "version": 2 }
+    ],
+    "expect": { "result": true }
+  },
+  {
+    "id": "vector.staleness.fresh",
+    "description": "A reference at or above the target version is not stale (spec 10.4).",
+    "module": "blyg/reference",
+    "requirements": ["R10.4-2"],
+    "issue": "SUK-141",
+    "check": "vector",
+    "fn": "oracle.isStale",
+    "args": [
+      { "id": "1jt332depwffcsyfz9txf8c9r9", "version": 3, "origin": "https://example.com/blyg/" },
+      { "id": "1jt332depwffcsyfz9txf8c9r9", "version": 2 }
+    ],
+    "expect": { "result": false }
+  },
+  {
+    "id": "vector.feed-title.note-and-excerpt",
+    "description": "The recommended feed title derivation is `note — excerpt` (spec 7).",
+    "module": "blyg/feed",
+    "requirements": ["R7-5"],
+    "issue": "SUK-138",
+    "check": "vector",
+    "fn": "oracle.deriveFeedTitle",
+    "args": ["sharpened the claim", "Markdown source of the latest…", "fragment"],
+    "expect": { "result": "sharpened the claim — Markdown source of the latest…" }
+  },
+  {
+    "id": "vector.feed-title.excerpt-only",
+    "description": "With no note the derived title is the excerpt alone (spec 7).",
+    "module": "blyg/feed",
+    "requirements": ["R7-5"],
+    "issue": "SUK-138",
+    "check": "vector",
+    "fn": "oracle.deriveFeedTitle",
+    "args": [null, "Markdown source of the latest…", "fragment"],
+    "expect": { "result": "Markdown source of the latest…" }
+  },
+  {
+    "id": "vector.feed-title.withdrawn",
+    "description": "A withdrawal entry's title is the literal `withdrawn` (spec 7).",
+    "module": "blyg/feed",
+    "requirements": ["R7-5", "R7-7"],
+    "issue": "SUK-138",
+    "check": "vector",
+    "fn": "oracle.deriveFeedTitle",
+    "args": [null, "ignored", "withdrawn"],
+    "expect": { "result": "withdrawn" }
+  }
+]

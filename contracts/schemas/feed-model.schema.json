@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "blygpress:feed-model",
+  "title": "Normalized feed model (reader-side parse of feed.xml)",
+  "description": "The reader parses RSS/Atom into this windowed notification-plane model (spec 7, 13.2). The feed is a lossy signal: it never mutates state; only a fetched item document advances it.",
+  "type": "object",
+  "required": ["channel", "entries"],
+  "properties": {
+    "channel": {
+      "type": "object",
+      "required": ["title", "link"],
+      "properties": {
+        "title": { "type": "string" },
+        "link": { "type": "string" },
+        "description": { "type": "string" },
+        "lastBuildDate": { "type": "string", "description": "RFC 822 in the XML." },
+        "level": { "$ref": "blygpress:common#/$defs/Level" },
+        "manifest": { "type": "string", "description": "Absolute URL from <blyg:manifest>; the feed's upgrade hook (spec 7)." }
+      },
+      "additionalProperties": true
+    },
+    "entries": {
+      "type": "array",
+      "description": "Newest first. One entry per publish event; entries render the item's LATEST content (spec 7).",
+      "items": {
+        "type": "object",
+        "required": ["guid", "link", "title"],
+        "properties": {
+          "guid": { "type": "string", "description": "blyg:{id}:v{n}, isPermaLink=\"false\" for blyg feeds." },
+          "link": { "type": "string" },
+          "title": { "type": "string", "description": "Derived; MUST NOT be read back as an item field (spec 7)." },
+          "descriptionHtml": { "type": "string" },
+          "pubDate": { "type": "string" },
+          "id": { "$ref": "blygpress:common#/$defs/Id" },
+          "kind": { "type": "string" },
+          "version": { "type": "integer", "minimum": 1 },
+          "created": { "$ref": "blygpress:common#/$defs/Iso8601Utc" },
+          "itemUrl": { "type": "string" },
+          "creator": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "legacy": {
+      "type": "boolean",
+      "description": "True when the source is a plain L0 feed with no blyg: namespace (spec 13.6)."
+    }
+  },
+  "additionalProperties": true,
+  "x-conformance": {
+    "spec": ["7", "13.2", "13.6"],
+    "issue": "SUK-139",
+    "notes": [
+      "A withdrawn item contributes exactly one entry, title 'withdrawn', empty description (spec 7).",
+      "Pinning emits no feed event (spec 7)."
+    ]
+  }
+}

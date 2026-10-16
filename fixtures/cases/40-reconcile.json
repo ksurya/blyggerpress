@@ -1,0 +1,356 @@
+[
+  {
+    "id": "reconcile.ignore-unknown",
+    "description": "Unknown kinds, unknown JSON members, unknown blyg:* XML elements and reserved constructs are ignored without rejecting the containing document.",
+    "module": "blyg/reconcile",
+    "requirements": ["R3-1", "R3.1-1", "R13.1-4"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "13.1",
+    "given": "A feed or item document carrying constructs the reader does not implement (an unknown kind, an extra JSON member, an unknown blyg:* element).",
+    "expect": {
+      "outcome": "The reader ignores each unknown construct and continues; the containing document is never rejected.",
+      "asserts": [
+        "Any 0.x value of the blyg key is accepted and the ignore-unknown rules apply.",
+        "An unknown kind is an unknown construct, not a parse failure.",
+        "Only the individual unknown construct is dropped, never the container."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/index.json"]
+  },
+  {
+    "id": "reconcile.no-gating",
+    "description": "Readers MUST NOT gate any behaviour on level, generator, generator_url, or the self-asserted changelog generated flag.",
+    "module": "blyg/reconcile",
+    "requirements": ["R3.2-1", "R5.2-5", "R13.1-8"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "13.1",
+    "given": "Two blygs with different informative level/generator values and a changelog entry carrying generated:true.",
+    "expect": {
+      "outcome": "Both are processed identically; no parsing, feature selection or trust decision reads those fields.",
+      "asserts": [
+        "level, generator and generator_url are informative only.",
+        "The changelog generated flag is self-asserted and never gated on.",
+        "Behaviour is identical across levels."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/blyg.json"]
+  },
+  {
+    "id": "reconcile.origin-scoping",
+    "description": "Everything is scoped to the origin: ids, authors, transclusion ids and trust do not transfer across origins.",
+    "module": "blyg/reconcile",
+    "requirements": ["R5.1-4", "R5.5-2", "R10.3-5", "R13.1-7"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "13.1",
+    "given": "The same item id (or an equal author object) observed at two different origins.",
+    "expect": {
+      "outcome": "The two are held apart as distinct origin-scoped entities; a publisher finding one id at two imported origins treats it as ambiguous.",
+      "asserts": [
+        "Ids are scoped to the origin they were learned from.",
+        "Equal author values at different origins are not the same entity.",
+        "A transclusion id is scoped to its origin when present, else to the document's own origin."
+      ]
+    },
+    "artifacts": ["fixtures/wire/remote-blyg/items/7gvp7ms7wq4nks6erdbbdp8cqc.json"]
+  },
+  {
+    "id": "reconcile.long-fragment",
+    "description": "Publishers SHOULD cap fragment content at 2000 chars, but a reader MUST NOT reject a long fragment.",
+    "module": "blyg/reconcile",
+    "requirements": ["R5.3-2"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "5.3",
+    "given": "A fragment whose content_md exceeds 2000 characters.",
+    "expect": {
+      "outcome": "The reader accepts and reconciles the long fragment; the cap is a publisher-side recommendation only.",
+      "asserts": [
+        "The 2000-char cap is a SHOULD on publishers.",
+        "Readers MUST NOT reject long fragments.",
+        "No truncation of stored content occurs."
+      ]
+    }
+  },
+  {
+    "id": "reconcile.author-passthrough",
+    "description": "Clients that store or re-emit item JSON carry author verbatim, never synthesized or rewritten, and never reject an item over it.",
+    "module": "blyg/reconcile",
+    "requirements": ["R5.5-4", "R13.1-5"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "13.1",
+    "given": "An imported item whose author object contains nonstandard members.",
+    "expect": {
+      "outcome": "The author object is stored and re-emitted byte-for-byte; the item is accepted regardless of its contents.",
+      "asserts": [
+        "author is carried verbatim through store and re-emit (where re-emit is permitted at all).",
+        "An item is never rejected over its author contents.",
+        "Equal author values across origins are not merged."
+      ]
+    }
+  },
+  {
+    "id": "reconcile.feed-not-authoritative",
+    "description": "Item documents are ground truth; the feed is a lossy notification signal that never mutates state directly.",
+    "module": "blyg/reconcile",
+    "requirements": ["R13.1-1", "R13.2-2"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "13.2",
+    "given": "A feed whose entry disagrees with the authoritative items/{id}.json document.",
+    "expect": {
+      "outcome": "The feed triggers a fetch; only the fetched document advances state, and the feed's claims are discarded.",
+      "asserts": [
+        "The feed is a cheap trigger, never ground truth.",
+        "Only a fetched document advances stored state.",
+        "A poll failure leaves stored state unaltered."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/feed.xml"]
+  },
+  {
+    "id": "reconcile.rollup-by-id",
+    "description": "Roll-up is by blyg:id: the highest version wins, ties broken by updated.",
+    "module": "blyg/reconcile",
+    "requirements": ["R13.1-2"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "13.1",
+    "given": "Multiple observations of one id at the same origin with differing versions (and a same-version tie).",
+    "expect": {
+      "outcome": "The row with the highest version is presented; equal versions are ordered by updated.",
+      "asserts": [
+        "Highest version wins.",
+        "Same-version ties break by updated.",
+        "Roll-up is per origin."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/1jt332depwffcsyfz9txf8c9r9.json"]
+  },
+  {
+    "id": "reconcile.index-gap-recovery",
+    "description": "When the feed window has been missed, the reader backfills from items/index.json (feed-window gaps fall back to an index diff).",
+    "module": "blyg/reconcile",
+    "requirements": ["R13.1-6", "R13.2-1"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "13.2",
+    "given": "A reader that was offline across more publish events than the feed window holds.",
+    "expect": {
+      "outcome": "The reader diffs items/index.json against local watermarks and fetches only the missing documents.",
+      "asserts": [
+        "The archive index is the reconciliation surface.",
+        "The feed is only a cheap trigger.",
+        "Backfill fetches only documents missing locally."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/index.json"]
+  },
+  {
+    "id": "reconcile.malformed-entry-skip",
+    "description": "An unparseable feed goes straight to an index diff; an unparseable entry is skipped individually and never rejects the containing feed.",
+    "module": "blyg/reconcile",
+    "requirements": ["R13.2-3"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "13.2",
+    "given": "A feed containing one malformed <item> among otherwise valid entries.",
+    "expect": {
+      "outcome": "The malformed entry is skipped; the rest of the feed is processed, and a wholly unparseable feed falls back to the index diff.",
+      "asserts": [
+        "Entry-level parse failures are isolated.",
+        "The containing feed is never rejected outright.",
+        "A wholly unparseable feed triggers an index diff."
+      ]
+    }
+  },
+  {
+    "id": "reconcile.missing-index-lossy",
+    "description": "A 404 on items/index.json from an otherwise-live blyg is nonconforming; the reader falls back to feed-window-only operation and marks the subscription lossy.",
+    "module": "blyg/reconcile",
+    "requirements": ["R13.2-4"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "13.2",
+    "given": "A blyg whose manifest and feed resolve but whose items/index.json returns 404.",
+    "expect": {
+      "outcome": "The subscription operates from the feed window alone and is surfaced as lossy.",
+      "asserts": [
+        "The missing index is recorded as nonconforming/lossy.",
+        "Feed-window-only operation continues.",
+        "The condition is surfaced to the user."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/blyg.json"]
+  },
+  {
+    "id": "reconcile.poll-failure-no-mutation",
+    "description": "A poll failure never alters stored item state.",
+    "module": "blyg/reconcile",
+    "requirements": ["R13.2-2"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "13.2",
+    "given": "A transient network or 5xx failure during a poll.",
+    "expect": {
+      "outcome": "Stored items and watermarks are untouched; only the polling schedule (backoff) is affected.",
+      "asserts": [
+        "Failures do not mutate item state or watermarks.",
+        "Failures do not delete stored content.",
+        "Retry is scheduled with backoff."
+      ]
+    }
+  },
+  {
+    "id": "reconcile.rollback-loud",
+    "description": "A fetched document whose version is below the watermark MUST NOT be silently adopted; the reader surfaces it and MAY offer a user-confirmed reset.",
+    "module": "blyg/reconcile",
+    "requirements": ["R13.3-1"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "13.3",
+    "given": "A fetched item document whose version is lower than the locally stored watermark.",
+    "expect": {
+      "outcome": "The regression is surfaced as a discrepancy; the older version is not silently adopted; a user-confirmed reset may be offered.",
+      "asserts": [
+        "Version regression is loud, not silent.",
+        "The stale document is not adopted without confirmation.",
+        "The watermark is not lowered automatically."
+      ]
+    },
+    "artifacts": ["fixtures/store/sample-store.json"]
+  },
+  {
+    "id": "reconcile.stealth-edit",
+    "description": "Same version but a different content_hash is a stealth edit: adopt the fetched content, record/surface the discrepancy, and leave the watermark unchanged.",
+    "module": "blyg/reconcile",
+    "requirements": ["R13.3-2"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "13.3",
+    "given": "A fetched document at the same version as stored but with a different content_hash.",
+    "expect": {
+      "outcome": "The fetched content is adopted, a stealth-edit discrepancy is recorded and surfaced, and the watermark stays the same.",
+      "asserts": [
+        "Content is adopted despite the hash change.",
+        "The discrepancy is recorded and surfaced.",
+        "The watermark is unchanged."
+      ]
+    }
+  },
+  {
+    "id": "reconcile.hash-mismatch",
+    "description": "Readers verify content_hash against content_md on import; a mismatch is a discrepancy signal and the content is adopted anyway.",
+    "module": "blyg/reconcile",
+    "requirements": ["R13.3-3"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "13.3",
+    "given": "A fetched document whose content_hash does not match sha256(content_md).",
+    "expect": {
+      "outcome": "The mismatch is recorded and surfaced; the document content is adopted regardless.",
+      "asserts": [
+        "content_hash is recomputed over content_md on import.",
+        "A mismatch is a discrepancy, not a rejection.",
+        "The content is still adopted."
+      ]
+    }
+  },
+  {
+    "id": "reconcile.withdrawal-drop-unpinned",
+    "description": "A withdrawal endcap rolls the item up to null: withdrawn content stops being presented and is deleted unless a pin authorizes retention.",
+    "module": "blyg/reconcile",
+    "requirements": ["R9-3", "R13.1-3", "R13.4-1"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "13.4",
+    "given": "A reader holding an unpinned withdrawn item, then fetching its kind=withdrawn endcap.",
+    "expect": {
+      "outcome": "The item rolls up to null, drops from the local archive, and the stored copy is deleted; the endcap document stays 200 at the origin.",
+      "asserts": [
+        "A withdrawal endcap is roll-up-to-null.",
+        "Unpinned withdrawn content is dropped from the local archive.",
+        "The id is remembered so a later version is the item returning."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/3wh683yzk9m9byd7tr17fpaxfs.json"]
+  },
+  {
+    "id": "reconcile.withdrawal-retain-pinned",
+    "description": "A pin is the only thing that may be retained past withdrawal; a pin-retained snapshot stays a valid transclusion source.",
+    "module": "blyg/reconcile",
+    "requirements": ["R8-7", "R13.4-1", "R13.4-2"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "13.4",
+    "given": "An item withdrawn after one of its versions was pinned and locally retained.",
+    "expect": {
+      "outcome": "The pinned snapshot is retained with attribution and remains usable as a transclusion source; local hoarding beyond pins is nonconforming.",
+      "asserts": [
+        "Retention follows a pin only.",
+        "A pin-retained snapshot remains a valid transclusion source.",
+        "An unretained withdrawn item is not a transclusion source."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/1jt332depwffcsyfz9txf8c9r9/v2.json"]
+  },
+  {
+    "id": "reconcile.withdrawal-return",
+    "description": "Withdrawal is reversible: a later publish event under the same id is the item returning.",
+    "module": "blyg/reconcile",
+    "requirements": ["R9-4"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "9",
+    "given": "An item that was withdrawn and later republished under the same id at a higher version.",
+    "expect": {
+      "outcome": "The reader rolls up to the new version and presents the item again under the same identity.",
+      "asserts": [
+        "The id is permanent across withdrawal and return.",
+        "A higher-version document is reconciled as the return.",
+        "Identity and origin are unchanged."
+      ]
+    }
+  },
+  {
+    "id": "reconcile.l0-wrapper",
+    "description": "Legacy L0 wrapping: synthetic ids are never valid blyg ids, L0 rows are never transclusion sources, and a changed GUID is a local version bump.",
+    "module": "blyg/reconcile",
+    "requirements": ["R13.6-1", "R13.6-2", "R13.6-3"],
+    "issue": "SUK-140",
+    "check": "spec",
+    "spec": "13.6",
+    "given": "A plain RSS feed (no blyg namespace) subscribed in legacy mode.",
+    "expect": {
+      "outcome": "Entries are wrapped as L0 rows with synthetic non-blyg ids; the same GUID with changed content bumps a local version; there is no withdrawal and no archive index.",
+      "asserts": [
+        "Synthetic L0 ids are never valid blyg ids and are never exported or re-emitted.",
+        "An L0 row is never a transclusion source; a reply to it is a {url} stub.",
+        "RSS has no versions; changed content under one GUID is a local version bump."
+      ]
+    },
+    "artifacts": ["fixtures/store/sample-store.json"]
+  },
+  {
+    "id": "reconcile.ordering-policy",
+    "description": "Ordering the merged reading surface is the reader's own policy; a skewed or future-dated origin cannot permanently dominate the display order.",
+    "module": "blyg/reconcile",
+    "requirements": ["R13.7-1"],
+    "issue": "SUK-145",
+    "check": "spec",
+    "spec": "13.7",
+    "given": "A merged timeline across origins, one of which publishes future-dated or clock-skewed items.",
+    "expect": {
+      "outcome": "The reader's policy keeps one origin from permanently dominating the order.",
+      "asserts": [
+        "Display ordering is a reader policy, not a protocol rule.",
+        "Future-dated items cannot permanently pin the top of the surface.",
+        "Ranking/profile inputs remain private (spec-external, SUK-145)."
+      ]
+    },
+    "artifacts": ["fixtures/store/sample-store.json"]
+  }
+]

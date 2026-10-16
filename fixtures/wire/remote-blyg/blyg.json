@@ -1,0 +1,21 @@
+{
+  "blyg": "0.3",
+  "level": 2,
+  "generator": "fixture-remote/1.0.0",
+  "generator_url": "https://example.org/fixture-remote",
+  "site": "https://blyg.protocol-institute.org/",
+  "title": "Protocol Institute Blyg",
+  "author": {
+    "name": "Editor",
+    "links": [
+      {
+        "label": "Home",
+        "url": "https://blyg.protocol-institute.org/"
+      }
+    ]
+  },
+  "feed": "feed.xml",
+  "items": "items/index.json",
+  "webmention": "webmention",
+  "updated": "2026-07-16T21:00:00Z"
+}

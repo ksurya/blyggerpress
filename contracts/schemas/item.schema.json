@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "blygpress:item",
+  "title": "Blygger canonical item document — items/{id}.json",
+  "description": "Reader-acceptance schema for the item document (spec 5). Ground truth for one item. Unknown members are permitted and ignored.",
+  "type": "object",
+  "required": ["blyg", "id", "kind", "origin", "created", "updated", "version", "content_md", "content_html", "content_hash", "changelog"],
+  "properties": {
+    "blyg": { "$ref": "blygpress:common#/$defs/BlygKey" },
+    "id": { "$ref": "blygpress:common#/$defs/Id" },
+    "kind": { "type": "string", "description": "Known kinds are fragment, thread, withdrawn. Readers MUST treat unknown kinds as unknown constructs and ignore the item without rejecting its container (spec 5.3, 13.1 rule 4)." },
+    "origin": { "type": "string" },
+    "page": { "type": "string", "description": "Origin-relative (or absolute) URL of the human-readable permalink (spec 5.8)." },
+    "author": { "$ref": "blygpress:common#/$defs/Author" },
+    "created": { "$ref": "blygpress:common#/$defs/Iso8601Utc" },
+    "updated": { "$ref": "blygpress:common#/$defs/Iso8601Utc", "description": "MUST equal the latest changelog entry's at (spec 5.2)." },
+    "version": { "type": "integer", "minimum": 1 },
+    "content_md": { "type": "string" },
+    "content_html": { "type": "string", "description": "Self-contained; every URL absolute (spec 5.2)." },
+    "content_hash": { "$ref": "blygpress:common#/$defs/ContentHash" },
+    "media": { "type": "array", "items": { "$ref": "blygpress:common#/$defs/MediaEntry" } },
+    "changelog": { "type": "array", "items": { "$ref": "blygpress:common#/$defs/ChangelogEntry" } },
+    "transclusions": { "type": "array", "items": { "$ref": "blygpress:common#/$defs/Transclusion" } },
+    "stub_of": { "$ref": "blygpress:common#/$defs/StubOf" },
+    "forked_from": { "$ref": "blygpress:common#/$defs/AbsoluteReference" },
+    "generated": { "type": "array", "items": { "$ref": "blygpress:common#/$defs/GeneratedSpan" } }
+  },
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "comment": "Threads always carry transclusions (spec 10.3); fragments omit the key entirely.",
+      "if": { "properties": { "kind": { "const": "thread" } }, "required": ["kind"] },
+      "then": { "required": ["transclusions"] }
+    },
+    {
+      "comment": "A withdrawal endcap empties content and media, omits stub_of and generated, and keeps page and forked_from (spec 9).",
+      "if": { "properties": { "kind": { "const": "withdrawn" } }, "required": ["kind"] },
+      "then": {
+        "properties": {
+          "content_md": { "const": "" },
+          "content_html": { "const": "" },
+          "media": { "type": "array", "maxItems": 0 },
+          "generated": false
+        }
+      }
+    }
+  ],
+  "x-emit-required": ["blyg", "id", "kind", "origin", "page", "created", "updated", "version", "content_md", "content_html", "content_hash", "changelog"],
+  "x-conformance": {
+    "spec": ["5", "5.1", "5.2", "5.3", "5.4", "5.5", "5.6", "5.7", "5.8", "5.9"],
+    "issue": "SUK-137",
+    "notes": [
+      "Only the latest version's content is served; the changelog is metadata, never a diff (5.2).",
+      "updated MUST equal the latest changelog entry's at (5.2).",
+      "content_hash covers content_md only (5.1).",
+      "Items are titleless; readers MUST NOT extract a title (5.3)."
+    ]
+  }
+}

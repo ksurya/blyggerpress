@@ -1,0 +1,24 @@
+{
+  "blyg": "0.3",
+  "id": "7gvp7ms7wq4nks6erdbbdp8cqc",
+  "kind": "fragment",
+  "origin": "https://blyg.protocol-institute.org/",
+  "page": "f/7gvp7ms7wq4nks6erdbbdp8cqc/",
+  "author": {
+    "name": "Editor",
+    "url": "https://blyg.protocol-institute.org/"
+  },
+  "created": "2026-07-16T20:10:00Z",
+  "updated": "2026-07-16T20:10:00Z",
+  "version": 1,
+  "content_md": "Remote fragment content.",
+  "content_html": "<p>Remote fragment content.</p>",
+  "content_hash": "sha256:eeb3f02dd9d731940277cc1af6011b9fbbe2eaef840b3f1a63008ee6c7b649d8",
+  "changelog": [
+    {
+      "version": 1,
+      "at": "2026-07-16T20:10:00Z",
+      "note": null
+    }
+  ]
+}

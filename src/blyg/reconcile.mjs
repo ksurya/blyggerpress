@@ -86,7 +86,7 @@ function makeRow(fields) {
     attribution: fields.attribution ?? null,
     notices: Array.isArray(fields.notices) ? fields.notices : [],
   };
-  for (const k of ["updated", "author", "page"]) {
+  for (const k of ["updated", "author", "page", "transclusions", "stub_of", "forked_from", "generated"]) {
     if (fields[k] !== undefined) row[k] = fields[k];
   }
   return row;
@@ -287,6 +287,8 @@ function finalizeLive(st, { fetchOrigin, doc, existing, version, watermark, obse
     dropped: false,
     presented: true,
     pinnedSnapshot: existing?.pinnedSnapshot ?? null,
+    ...Object.fromEntries(["transclusions", "stub_of", "forked_from", "generated"]
+      .filter(k => doc[k] !== undefined).map(k => [k, clone(doc[k])])),
   });
   return { store: putRow(st, row), outcome, row };
 }
@@ -316,7 +318,9 @@ function importWithdrawal(st, { fetchOrigin, doc, existing, version, watermark, 
       contentHash: snap.contentHash,
       contentHtml: snap.contentHtml,
       contentMd: snap.contentMd ?? null,
-      author: existing.author,
+      author: snap.author ?? existing.author,
+      ...Object.fromEntries(["transclusions", "stub_of", "forked_from", "generated"]
+        .filter(k => snap[k] !== undefined).map(k => [k, clone(snap[k])])),
       page: snap.page ?? existing.page,
       media: [],
       retainedPinnedVersion: pinnedVersion,
@@ -376,10 +380,12 @@ export function retainPinnedVersion(store, { origin, id, version, snapshot = {},
   const existing = findRow(st, fetchOrigin, id);
   const snap = {
     version: v,
-    contentHash: snapshot.contentHash ?? "",
-    contentHtml: snapshot.contentHtml ?? "",
-    contentMd: snapshot.contentMd ?? null,
+    contentHash: snapshot.contentHash ?? snapshot.content_hash ?? "",
+    contentHtml: snapshot.contentHtml ?? snapshot.content_html ?? "",
+    contentMd: snapshot.contentMd ?? snapshot.content_md ?? null,
     page: snapshot.page ?? existing?.page,
+    ...Object.fromEntries(["kind", "author", "transclusions", "stub_of", "forked_from", "generated"]
+      .filter(k => snapshot[k] !== undefined).map(k => [k, clone(snapshot[k])])),
   };
 
   const row = existing

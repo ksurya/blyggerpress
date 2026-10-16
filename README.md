@@ -5,8 +5,8 @@ shared contracts the rest of the project is built against.
 
 This repository pins the Blygger 0.3 specification and shared contracts, with
 reader imports (SUK-140), the item lifecycle (SUK-137), and static publication
-export (SUK-138) implemented.
-The remaining studio, composition, deployment, and release work is tracked by
+export (SUK-138), and composition/provenance (SUK-141) implemented.
+The remaining studio, deployment, and release work is tracked by
 SUK-136..SUK-146.
 
 ## What this repo contains
@@ -26,14 +26,15 @@ SUK-136..SUK-146.
 ## Quick start
 
 ```sh
-npm test                           # lifecycle, reader, and integration tests
+npm ci                             # install runtime and test dependencies
+npm test                           # lifecycle, reader, composition, and integration tests
 npm run test:fixtures              # spec pin, all cases, and requirement coverage
 node tools/build-requirements.mjs    # regenerate docs/REQUIREMENTS.md
 node tools/build-wire-fixtures.mjs   # regenerate fixtures/wire/** and fixtures/store/**
 ```
 
-Requires Node.js 20+ (uses `import.meta.dirname`). No runtime dependencies; run
-`npm ci` to install the IndexedDB test dependency.
+Requires Node.js 20+ (uses `import.meta.dirname`). Composition uses `markdown-it`
+and `parse5`; `npm ci` also installs the IndexedDB test dependency.
 
 ## Documentation
 
@@ -257,7 +258,7 @@ and `end` offsets into `contentMd`, plus `sources`, `model`, and `at`. Ranges ar
 ordered and nonoverlapping and surround complete Markdown constructs. Inline
 ranges use `blyg-tk-gen` spans; whole-body/block ranges use divs (`block: true`
 explicitly requests one). Only the public generation metadata reaches item JSON;
-o instructions or offset markers enter the Markdown or wire provenance.
+No instructions or offset markers enter the Markdown or wire provenance.
 Generation sources are own-origin references and never become transclusions.
 
 `writer.newFork(pinnedDocument)` creates a draft with immutable, one-hop lineage.

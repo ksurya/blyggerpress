@@ -311,12 +311,21 @@ Private backup download and inspected, confirmed replacement restore live in
 **Library & publication**. Restore downloads the current backup before replacing
 the library. Save conflicts and storage errors retain editor input; reload a
 conflicting tab after preserving unsaved text. There is no automatic reset.
+Unsaved private notes and publication settings survive unrelated actions and
+reader refreshes within the session. Draft switches ask before discarding editor
+changes; quote, edit, and fork actions obtain consent before creating a draft.
+Reload/close prompts protect unsaved text, but these working buffers do not
+provide crash recovery. Confirmed restore clears them only after replacement
+succeeds.
 
 Validation: `npm test`, `npm run test:fixtures`, and `npm run test:studio`.
 The browser check uses Playwright Chromium (`npx playwright install chromium`),
 or `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` for an installed Chrome binary. It
 checks the generated standalone file, publication preview, save/publish/reload,
 ZIP download, reader file import, note/feedback persistence, and a 390px layout.
+It also checks independent unsaved notes, focus/selection, refresh success/failure,
+identity input, canceled draft actions, failed writes, reload guards, restore,
+and unsubscribe preservation.
 Screenshots are saved under `.context/`. Phone hardware and WebKit validation,
 media-upload UI, hosting/deployment, and full release conformance remain outside
 this implementation.

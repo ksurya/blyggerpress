@@ -151,3 +151,35 @@ test('browser download adapter creates a ZIP link and releases the object URL', 
     URL.createObjectURL=saved.create; URL.revokeObjectURL=saved.revoke; globalThis.setTimeout=saved.timer;
   }
 });
+
+test('fractional UTC timestamps order archive/feed windows by instant', () => {
+  let next=0;
+  const origin='https://example.com/';
+  const lifecycle=createLifecycle({origin,idFactory:()=>String(++next).padStart(26,'0')});
+  const a=lifecycle.newDraft({contentMd:'Older',contentHtml:'<p>Older</p>'});
+  lifecycle.publish(a.localId,{at:'2026-10-16T12:00:00Z'});
+  const b=lifecycle.newDraft({contentMd:'Newer',contentHtml:'<p>Newer</p>'});
+  const newer=lifecycle.publish(b.localId,{at:'2026-10-16T12:00:00.500Z'});
+  const options={origin,title:'Precision',items:lifecycle.listItems(),window:1};
+  const files=text(buildStaticPublication(options));
+  assert.equal(JSON.parse(files.get('items/index.json')).items[0].id,newer.itemId);
+  assert.equal(parseFeed(files.get('feed.xml')).entries[0].id,newer.itemId);
+  assert.doesNotThrow(()=>buildStaticPublication({...options,updated:'2026-10-16T12:00:00.600Z'}));
+  assert.throws(()=>buildStaticPublication({...options,updated:'2026-10-16T12:00:00Z'}),/updated/);
+});
+
+test('media URL encoding maps Unicode, spaces and percent signs to host filenames', () => {
+  for (const filename of ['café.png','a b.png','c%20d.png','percent%25.png']) {
+    const origin='https://example.com/deep/';
+    const engine=createLifecycle({origin,idFactory:()=> '00000000000000000000000001',clock:()=> '2026-10-16T00:00:00Z'});
+    const entry={url:`media/${filename}`,mime:'image/png'};
+    const bytes=new Uint8Array([1,2,3]);
+    engine.registerMedia(entry,{bytes});
+    const d=engine.newDraft({contentMd:'Image',contentHtml:`<img src="${new URL(entry.url,origin).href}" alt="Image">`,media:[entry]});
+    engine.publish(d.localId);
+    const options={origin,title:'Images',items:engine.listItems(),assets:[{...entry,bytes,digest:sha256HexOfBytes(bytes)}]};
+    const files=buildStaticPublication(options);
+    assert.deepEqual(text(files).get(`media/${decodeURIComponent(filename)}`),bytes);
+    assert.doesNotThrow(()=>buildStaticPublication({...options,previousFiles:files}));
+  }
+});

@@ -15,8 +15,11 @@ export function feedTitle(doc, note = null) {
 
 export function buildFeed({ origin, title, updated, items, window = 50 }) {
   if (!Number.isSafeInteger(window) || window < 1) throw new Error('feed window must be a positive integer');
-  const events = items.flatMap(item => publishEvents(item).map(event => ({ event, doc: buildItemDocument(item) })))
-    .sort((a,b) => b.event.at.localeCompare(a.event.at) || a.event.id.localeCompare(b.event.id) || b.event.version - a.event.version).slice(0, window);
+  const events = items.flatMap(item => {
+    const doc = buildItemDocument(item);
+    return publishEvents(item).map(event => ({ event, doc }));
+  })
+    .sort((a,b) => Date.parse(b.event.at) - Date.parse(a.event.at) || a.event.id.localeCompare(b.event.id) || b.event.version - a.event.version).slice(0, window);
   const entries = events.map(({event:e, doc:d}) => `<item>
 <guid isPermaLink="false">blyg:${d.id}:v${e.version}</guid>
 ${tag('link', new URL(d.page, origin).href)}

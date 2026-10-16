@@ -13,8 +13,8 @@ function mount(value) {
 }
 
 // ZIP paths and public routes must agree, without aliases or traversal.
-function safePath(path) {
-  if (typeof path !== 'string' || !path || path.startsWith('/') || /[\\?#%:\x00-\x1f]/.test(path) || path.split('/').some(p => !p || p === '.' || p === '..')) throw new Error(`unsafe export path: ${path}`);
+function safePath(path, { decoded = false } = {}) {
+  if (typeof path !== 'string' || !path || path.startsWith('/') || /[\\?#:\x00-\x1f]/.test(path) || (!decoded && path.includes('%')) || path.split('/').some(p => !p || p === '.' || p === '..')) throw new Error(`unsafe export path: ${path}`);
   return path;
 }
 const bytes = body => typeof body === 'string' ? new TextEncoder().encode(body) : body;
@@ -31,25 +31,26 @@ export function buildStaticPublication({ origin, title, author = {}, items, asse
   if (typeof title !== 'string' || !Array.isArray(items)) throw new Error('title and published items are required');
   const rows = archiveRows(items);
   updated ??= rows[0]?.updated;
-  if (!isIso8601Utc(updated) || !Number.isFinite(Date.parse(updated)) || rows.some(r => r.updated > updated)) throw new Error('updated must be a UTC instant at or after every publish event (required for an empty site)');
+  if (!isIso8601Utc(updated) || !Number.isFinite(Date.parse(updated)) || rows.some(r => Date.parse(r.updated) > Date.parse(updated))) throw new Error('updated must be a UTC instant at or after every publish event (required for an empty site)');
   const files = new Map();
   const add = (path, body) => {
-    safePath(path);
+    safePath(path, {decoded:true});
     if (files.has(path)) throw new Error(`duplicate export path: ${path}`);
     files.set(path, typeof body === 'string' ? body : body.slice());
   };
   const projected = projectItemFiles(items);
-  const documents = [];
+  const projectedByPath = new Map(projected.map(({path,value}) => [path,value]));
+  const documents = new Map();
   for (const item of items) {
     if (item.origin !== origin) throw new Error('item origin differs from publication origin');
-    const doc = projected.find(f => f.path === `items/${item.id}.json`).value;
+    const doc = projectedByPath.get(`items/${item.id}.json`);
     if (!validatePublisherItem(doc).valid) throw new Error(`invalid published item: ${item.id}`);
     if (typeof doc.page !== 'string' || !doc.page.endsWith('/')) throw new Error('item page must be a relative directory path');
     safePath(doc.page.slice(0,-1));
-    documents.push(doc);
+    documents.set(doc.id, doc);
     add(`${doc.page}index.html`, renderItem(doc, { origin }));
     for (const v of pinnedVersions(item)) {
-      const pin = projected.find(f => f.path === `items/${item.id}/v${v.version}.json`).value;
+      const pin = projectedByPath.get(`items/${item.id}/v${v.version}.json`);
       add(`${doc.page}v${v.version}/index.html`, renderItem(pin, { origin, pin:true }));
     }
   }
@@ -62,7 +63,7 @@ export function buildStaticPublication({ origin, title, author = {}, items, asse
   add('blyg.json', serialize(manifest));
   add('items/index.json', serialize({updated, items:rows}));
   add('feed.xml', buildFeed({origin,title,updated,items,window}));
-  const ordered = rows.map(r => documents.find(d => d.id === r.id));
+  const ordered = rows.map(r => documents.get(r.id));
   const pages = renderArchive({origin,title,documents:ordered});
   add('index.html', pages.home);
   add('archive/index.html', pages.archive);
@@ -75,7 +76,11 @@ export function buildStaticPublication({ origin, title, author = {}, items, asse
       for (const entry of version.media ?? []) {
         const url = new URL(entry.url, origin);
         if (url.hash || url.search || !url.href.startsWith(origin)) throw new Error('media must be immutable files within the publication mount');
-        const path = safePath(url.href.slice(origin.length));
+        const path = safePath(url.href.slice(origin.length).split('/').map(segment => {
+          const decoded = decodeURIComponent(segment);
+          if (/[\\/]/.test(decoded)) throw new Error('unsafe media path segment');
+          return decoded;
+        }).join('/'), {decoded:true});
         if (!path.startsWith('media/')) throw new Error('media must live under media/');
         if (needed.has(path) && needed.get(path).mime !== entry.mime) throw new Error('conflicting media MIME');
         needed.set(path, entry);

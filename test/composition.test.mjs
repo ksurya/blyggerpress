@@ -233,3 +233,15 @@ test('partial grammar includes Markdown lazy blockquote continuations', () => {
   assert.deepEqual(r.transclusions[0].selector, { exact: 'Hello world' });
   assert.match(r.contentHtml, /<p>Hello world<\/p>/);
 });
+
+test('fork flattening preserves blockquote and list containers through recomposition', () => {
+  for (const contentMd of [`> before\n>\n> ![[${A}]]\n>\n> after`, `- ![[${A}]]`]) {
+    const baked = run(contentMd);
+    const fork = forkPinnedDocument(pin({ id: B, kind: 'thread', content_md: contentMd, content_html: baked.contentHtml }));
+    const recomposed = run(fork.contentMd);
+    assert.deepEqual(recomposed.transclusions, []);
+    assert.equal(compositionText(recomposed.contentHtml), compositionText(fork.contentHtml));
+    const tag = contentMd.startsWith('>') ? 'blockquote' : 'li';
+    assert.match(recomposed.contentHtml, new RegExp(`<${tag}>[\\s\\S]*<blockquote>`));
+  }
+});

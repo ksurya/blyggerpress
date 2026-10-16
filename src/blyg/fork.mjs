@@ -64,8 +64,15 @@ export function forkPinnedDocument(pin, { cited, pageForQuote } = {}) {
     if (!node) throw new CompositionError('pinned directive has no matching baked quote');
     const partial = dom.hasClass(node, 'blyg-partial');
     // Older clients' attached quote lines are prose unless the bake says partial.
+    const line = lines[token.meta.start];
+    const prefix = line.slice(0, line.indexOf('![['));
+    // Keep enclosing quotes/lists when replacing a directive's entire line.
+    // A list marker belongs on the first line; later lines use its indentation.
+    const continuation = prefix.replace(/(?:[-+*]|[0-9]+[.)])\s+/g, marker => ' '.repeat(marker.length));
+    const flattenedQuote = convert(node, pin.origin).trimEnd().split('\n')
+      .map((text, i) => (i === 0 ? prefix : continuation) + text).join('\n');
     edits.push({ start: token.meta.start, end: partial ? token.meta.end : token.meta.start + 1,
-      text: convert(node, pin.origin).trimEnd() });
+      text: flattenedQuote });
   }
   if (index !== topQuotes.length) throw new CompositionError('pinned quote/directive mismatch');
   // The pinned renderer controls anchor labels. Correlate authored links in

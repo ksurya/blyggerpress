@@ -43,6 +43,6 @@ never serialize this store or copy backup files into its output.
 
 SUK-142 integration: use this single store for authoring and reading, show a saved
 indicator only after `save` resolves, expose backup download and restore preview,
-and present open/save errors without replacing the library. There is no UI shell
-in this checkout yet. Tests use fake-indexeddb; actual phone/laptop storage and
+and present open/save errors without replacing the library. The standalone shell is built from `index.html`, `app.mjs`, and
+`controller.mjs` via `npm run build`. Tests use fake-indexeddb; actual phone/laptop storage and
 file-download behavior still need browser validation with that shell.

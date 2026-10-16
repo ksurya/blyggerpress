@@ -23,3 +23,6 @@ export * from "./primitives.mjs";
 export * from "./feed-reader.mjs";
 export * from "./reconcile.mjs";
 export * from "./importer.mjs";
+
+export * from "./fetch.mjs";
+export * from "./resolve.mjs";

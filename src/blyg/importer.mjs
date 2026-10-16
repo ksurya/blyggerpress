@@ -1,10 +1,12 @@
+import { createSafeFetch } from './fetch.mjs';
+import { resolveSubscription } from './resolve.mjs';
 // Reader import pipeline: pairs `blyg/reconcile` with discovery and fetching so
 // both import paths — the cheap feed trigger and the total archive-index diff —
 // reuse one import state and one failure path (spec §12.3, §13.2).
 //
 // This module owns orchestration, not wire protocol. Discovery (`blyg/resolve`,
-// SUK-139) and fetching (`blyg/fetch`, SUK-139) are injected as PORTS so the
-// production resolver/fetcher plug in here without duplication, and tests drive
+// SUK-139) and fetching (`blyg/fetch`, SUK-139) use injectable PORTS so the
+// production resolver/fetcher share this pipeline, and tests drive
 // the same code against the committed fixtures:
 //
 //   ports.resolveSubscription(url) -> { mode, identityOrigin, manifestUrl, feedUrl, title }
@@ -49,6 +51,8 @@ function shortHash(input) {
 
 function defaultPorts(ports = {}) {
   return {
+    fetchText: createSafeFetch(),
+    resolveSubscription,
     now: nowIso,
     parseFeed,
     parseIndex: parseArchiveIndex,
@@ -69,7 +73,7 @@ export async function subscribe(store, url, ports = {}, { at } = {}) {
   try {
     resolved = await p.resolveSubscription(url, { fetchText: p.fetchText, parseFeed: p.parseFeed });
   } catch (error) {
-    return { store: st, ok: false, reason: "resolution-failed", error: String(error?.message ?? error) };
+    return { store: st, ok: false, reason: "resolution-failed", error: String(error?.message ?? error), tried: error.tried, fallback: "import-feed" };
   }
   if (!resolved || (!resolved.identityOrigin && !resolved.feedUrl)) {
     return { store: st, ok: false, reason: "resolution-failed" };
@@ -90,6 +94,7 @@ export async function subscribe(store, url, ports = {}, { at } = {}) {
     manifestUrl: resolved.manifestUrl ?? null,
     feedUrl: resolved.feedUrl ?? null,
     title: resolved.title ?? identityOrigin,
+    notices: resolved.notices ?? [],
     blogrollVisible: false,
     lossy: false,
     etag: null,
@@ -116,9 +121,12 @@ function isDue(sub, at, now) {
 function scheduleBackoff(sub, at, { retryAfterMs } = {}) {
   const failures = Number(sub.failureCount ?? 0) + 1;
   sub.failureCount = failures;
-  const delay = Number.isFinite(retryAfterMs) && retryAfterMs > 0
-    ? retryAfterMs
-    : Math.min(BASE_BACKOFF_MS * 2 ** (failures - 1), MAX_BACKOFF_MS);
+  const delay = Math.max(
+    Math.min(BASE_BACKOFF_MS * 2 ** Math.min(failures - 1, 30), MAX_BACKOFF_MS),
+    Number(sub.lastBackoffMs ?? 0),
+    Number.isFinite(retryAfterMs) ? retryAfterMs : 0,
+  );
+  sub.lastBackoffMs = delay;
   sub.backoffUntil = new Date(Date.parse(at) + delay).toISOString();
   return sub;
 }
@@ -126,7 +134,7 @@ function scheduleBackoff(sub, at, { retryAfterMs } = {}) {
 async function fetchItemDocument(ports, origin, id, signal) {
   const url = `${origin}items/${id}.json`;
   const res = await ports.fetchText(url, { signal });
-  if (!res || res.status !== 200) return null;
+  if (!res || res.status !== 200 || (res.finalUrl && res.finalUrl !== url)) return null;
   try {
     return JSON.parse(res.body);
   } catch {
@@ -138,11 +146,11 @@ async function applyTriggers(store, { origin, triggers, ports, at }) {
   let st = store;
   const applied = [];
   for (const trigger of triggers) {
-    const url = trigger.itemUrl ?? `${origin}items/${trigger.id}.json`;
+    const url = `${origin}items/${trigger.id}.json`;
     let doc = null;
     try {
       const res = await ports.fetchText(url, { signal: ports.signal });
-      if (!res || res.status !== 200) continue;
+      if (!res || res.status !== 200 || (res.finalUrl && res.finalUrl !== url)) continue;
       try {
         doc = JSON.parse(res.body);
       } catch {
@@ -163,13 +171,13 @@ async function applyTriggers(store, { origin, triggers, ports, at }) {
  * runs on first subscribe, on a suspected feed-window gap, when the feed is
  * unparseable, or periodically. Only fetched documents advance state.
  */
-export async function pollSubscription(store, subscriptionId, ports = {}, { forceIndex = false, indexIntervalMs = DEFAULT_INDEX_INTERVAL_MS } = {}) {
+export async function pollSubscription(store, subscriptionId, ports = {}, { manual = false, forceIndex = false, indexIntervalMs = DEFAULT_INDEX_INTERVAL_MS } = {}) {
   const p = defaultPorts(ports);
   const at = p.now();
   let st = clone(ensureStore(store));
   const sub = st.subscriptions.find((s) => s.id === subscriptionId);
   if (!sub) return { store: st, ok: false, reason: "unknown-subscription" };
-  if (!isDue(sub, at)) return { store: st, ok: false, reason: "backoff", nextAttemptAt: sub.backoffUntil };
+  if (!manual && !isDue(sub, at)) return { store: st, ok: false, reason: "backoff", nextAttemptAt: sub.backoffUntil };
 
   const origin = sub.mode === "legacy" ? sub.identityOrigin : normalizeOrigin(sub.identityOrigin);
   const feedUrl = sub.feedUrl ?? (sub.mode === "legacy" ? sub.identityOrigin : `${origin}feed.xml`);
@@ -185,6 +193,10 @@ export async function pollSubscription(store, subscriptionId, ports = {}, { forc
       scheduleBackoff(sub, at);
       return { store: st, ok: false, reason: "poll-failed", error: String(error?.message ?? error), nextAttemptAt: sub.backoffUntil };
     }
+    if (res?.finalUrl && res.finalUrl !== feedUrl) {
+      scheduleBackoff(sub, at);
+      return { store: st, ok: false, reason: "identity-change", proposedUrl: res.finalUrl };
+    }
     if (res?.status === 304) {
       feedStatus = "not-modified";
     } else if (res?.status === 200) {
@@ -194,8 +206,8 @@ export async function pollSubscription(store, subscriptionId, ports = {}, { forc
       } catch {
         feedStatus = "unparseable"; // §13.2: an unparseable feed goes straight to an index diff
       }
-      sub.etag = res.etag ?? sub.etag;
-      sub.lastModified = res.lastModified ?? sub.lastModified;
+      sub.etag = res.etag ?? null;
+      sub.lastModified = res.lastModified ?? null;
     } else if (res?.status === 429 || res?.status === 503) {
       scheduleBackoff(sub, at, { retryAfterMs: parseRetryAfter(res.retryAfter, at) });
       return { store: st, ok: false, reason: "rate-limited", nextAttemptAt: sub.backoffUntil };
@@ -211,6 +223,10 @@ export async function pollSubscription(store, subscriptionId, ports = {}, { forc
 
   // Legacy L0: wrap the feed window; there is no index and no withdrawal (spec 13.6).
   if (sub.mode === "legacy") {
+    if (!feedModel && feedStatus !== "not-modified") {
+      scheduleBackoff(sub, at);
+      return { store: st, ok: false, reason: "poll-failed", nextAttemptAt: sub.backoffUntil };
+    }
     let wrapped = 0;
     if (feedModel) {
       for (const entry of feedModel.entries ?? []) {
@@ -226,6 +242,7 @@ export async function pollSubscription(store, subscriptionId, ports = {}, { forc
     sub.lastPolledAt = at;
     sub.backoffUntil = null;
     sub.failureCount = 0;
+    sub.lastBackoffMs = 0;
     return { store: st, ok: true, mode: "legacy", feed: feedStatus, wrapped };
   }
 
@@ -251,6 +268,10 @@ export async function pollSubscription(store, subscriptionId, ports = {}, { forc
     } catch (error) {
       scheduleBackoff(sub, at);
       return { store: st, ok: false, reason: "poll-failed", error: String(error?.message ?? error), nextAttemptAt: sub.backoffUntil };
+    }
+    if (res?.finalUrl && res.finalUrl !== indexUrl) {
+      scheduleBackoff(sub, at);
+      return { store: st, ok: false, reason: "identity-change", proposedUrl: res.finalUrl };
     }
     if (res?.status === 200) {
       let index = null;
@@ -292,6 +313,7 @@ export async function pollSubscription(store, subscriptionId, ports = {}, { forc
   sub.lastPolledAt = at;
   sub.backoffUntil = null;
   sub.failureCount = 0;
+  sub.lastBackoffMs = 0;
 
   return {
     store: st,
@@ -337,34 +359,36 @@ export async function pollAll(store, ports = {}, options = {}) {
   return { store: st, results };
 }
 
-/**
- * A minimal HTTP adapter for real deployments. Discovery and fetch hygiene
- * (§14: bounded redirects, size/time limits, private-network refusal) are owned
- * by `blyg/fetch` (SUK-139); this baseline applies a timeout and returns the
- * response shape the importer expects, and should be replaced by that module.
- */
-export function createHttpPorts({ fetchImpl = globalThis.fetch, userAgent = "BlyggerPress-Reader/0.3", timeoutMs = 15_000 } = {}) {
-  if (typeof fetchImpl !== "function") throw new Error("createHttpPorts requires a fetch implementation");
-  const fetchText = async (url, { etag, lastModified, signal } = {}) => {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    const headers = { "User-Agent": userAgent, Accept: "application/json, application/xml, text/xml, */*" };
-    if (etag) headers["If-None-Match"] = etag;
-    if (lastModified) headers["If-Modified-Since"] = lastModified;
-    try {
-      const res = await fetchImpl(url, { headers, redirect: "follow", signal: signal ?? controller.signal });
-      const body = res.status === 304 ? "" : await res.text();
-      return {
-        status: res.status,
-        body,
-        etag: res.headers?.get?.("etag") ?? undefined,
-        lastModified: res.headers?.get?.("last-modified") ?? undefined,
-        retryAfter: res.headers?.get?.("retry-after") ?? undefined,
-        finalUrl: res.url,
-      };
-    } finally {
-      clearTimeout(timer);
-    }
-  };
-  return { fetchText, parseFeed, parseIndex: parseArchiveIndex, now: nowIso };
+/** Browser-compatible bounded HTTP ports; an explicit proxy can be supplied as fetchImpl. */
+export function createHttpPorts(options = {}) {
+  return { fetchText: createSafeFetch(options), resolveSubscription, parseFeed, parseIndex: parseArchiveIndex, now: nowIso };
+}
+
+/** A deliberate refresh bypasses scheduling, and uses the same reconciliation. */
+export function refreshSubscription(store, id, ports = {}) {
+  return pollSubscription(store, id, ports, { manual: true, forceIndex: true });
+}
+
+/** File import fallback: no network and no inferred blyg authority from XML. */
+export async function importFeedFile(store, { feedUrl, text }, ports = {}) {
+  const model = (ports.parseFeed ?? parseFeed)(text, { baseUrl: feedUrl });
+  const { publicUrl } = await import('./fetch.mjs');
+  const url = publicUrl(feedUrl);
+  const result = await subscribe(store, url, { ...ports, resolveSubscription: async () => ({ mode: 'legacy', identityOrigin: url, feedUrl: url, title: model.channel.title }) });
+  return pollSubscription(result.store, result.subscription.id, { ...ports, fetchText: async () => ({ status: 200, body: text, finalUrl: url }) }, { manual: true });
+}
+
+/** Repoint only with explicit confirmation; existing imported origins remain intact. */
+export async function resolveSubscriptionAgain(store, id, url, ports = {}, { confirmIdentityChange = false } = {}) {
+  const current = findSubscription(store, id);
+  if (!current) return { store, ok: false, reason: 'unknown-subscription' };
+  const p = defaultPorts(ports);
+  let resolved;
+  try { resolved = await p.resolveSubscription(url, { fetchText: p.fetchText, parseFeed: p.parseFeed }); }
+  catch (error) { return { store, ok: false, reason: 'resolution-failed', error: error.message }; }
+  if ((resolved.identityOrigin !== current.identityOrigin || resolved.mode !== current.mode) && !confirmIdentityChange) return { store, ok: false, reason: 'identity-change', proposed: resolved };
+  const st = clone(store);
+  const sub = st.subscriptions.find(s => s.id === id);
+  Object.assign(sub, { mode: resolved.mode, identityOrigin: resolved.identityOrigin, manifestUrl: resolved.manifestUrl ?? null, feedUrl: resolved.feedUrl, title: resolved.title, notices: resolved.notices ?? [], etag: null, lastModified: null, lastPolledAt: null, lastIndexAt: null, backoffUntil: null, failureCount: 0, lastBackoffMs: 0 });
+  return { store: st, ok: true, subscription: sub };
 }

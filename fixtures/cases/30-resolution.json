@@ -45,9 +45,9 @@
     "issue": "SUK-139",
     "check": "spec",
     "spec": "12.1",
-    "given": "A subscription URL returning HTML whose <head> carries <link rel=\"blyg\" href=\"...blyg.json\">.",
+    "given": "A subscription URL returning HTML whose <head> carries <link rel=\"blyg\" href=\".../mount/\">.",
     "expect": {
-      "outcome": "The rel probe succeeds and resolves to the advertised manifest, consuming at most one rel hop.",
+      "outcome": "The rel probe succeeds and resolves to the advertised base plus blyg.json, consuming at most one rel hop.",
       "asserts": [
         "The HTML <link rel=\"blyg\"> element MUST be supported.",
         "Supporting an equivalent HTTP Link response header is OPTIONAL.",

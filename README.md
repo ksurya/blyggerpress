@@ -102,6 +102,55 @@ conservative guard, not a semantic proof. Authors must also avoid shorter quotes
 or paraphrases that reproduce withheld content. Generation provenance is
 allow-listed and self-asserted; authoring instructions never become wire fields.
 
+## Subscription discovery and safe fetching (SUK-139)
+
+The browser-compatible reader API now includes ordered URL discovery, bounded
+fetching, manual refresh, and RSS/Atom file import. It plugs into the existing
+private store and reconciliation engine; this repository does not yet include
+the standalone studio UI.
+
+```js
+import { createStore, createHttpPorts, subscribe, refreshSubscription,
+  importFeedFile } from "./src/blyg/index.mjs";
+const ports = createHttpPorts();
+const result = await subscribe(createStore(), "https://example.com/blyg/", ports);
+if (result.ok) {
+  const refreshed = await refreshSubscription(result.store, result.subscription.id, ports);
+  // Persist refreshed.store through the studio storage adapter.
+}
+// When browser CORS prevents access, use a user-selected file and its source URL:
+const imported = await importFeedFile(createStore(), {
+  feedUrl: "https://example.com/feed.xml", text: selectedFileText,
+});
+```
+
+Discovery follows spec §12.1, including base-URL `rel="blyg"` links, a single
+rel hop, and a shared six-request budget including redirects. Manifest identity
+comes from the final manifest URL, with asserted-site disagreement returned as
+subscription notices. File import creates legacy L0 entries, even when XML
+contains blyg metadata; XML alone cannot establish canonical item authority.
+
+The transport defaults to five redirects, 15 seconds for headers and body, and
+1 MiB streamed bodies. Requests omit credentials and referrers. It rejects
+unsafe schemes, credentials in URLs, local names and private IPv4 literals;
+IPv6 literals are conservatively refused. Conditional requests reuse ETag and
+Last-Modified. Manual refresh bypasses scheduling, performs index reconciliation,
+and still records failures/backoff. Retry delays never shrink across failures.
+Redirected feed/index/item responses cannot silently move an existing identity;
+`resolveSubscriptionAgain` returns a proposal and requires the caller's explicit
+`confirmIdentityChange: true` after user confirmation. Old imported origins remain
+separate.
+
+Browser CORS failures and opaque manual redirects are surfaced with file import
+as a fallback. An optional Worker fetch proxy is a deployment convenience, not a
+protocol requirement, and is not deployed or included here. A proxy can implement
+the `fetchText` port, preserving the actual upstream `finalUrl` and enforcing
+these bounds. Any server transport must additionally enforce public DNS results
+and prevent rebinding at connection time; `validateDestination` is an integration
+hook, not a DNS/egress implementation. Do not expose the default browser adapter
+as an unrestricted server proxy. Browsers may override the identifying User-Agent.
+Fetched HTML remains untrusted and must be sanitized by the rendering layer.
+
 ## Private persistence
 
 SUK-136 supplies atomic IndexedDB persistence, v1→v2 migration, and private JSON

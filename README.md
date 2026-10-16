@@ -31,7 +31,8 @@ node tools/build-requirements.mjs    # regenerate docs/REQUIREMENTS.md
 node tools/build-wire-fixtures.mjs   # regenerate fixtures/wire/** and fixtures/store/**
 ```
 
-Requires Node.js 20+ (uses `import.meta.dirname`). No dependencies.
+Requires Node.js 20+ (uses `import.meta.dirname`). No runtime dependencies; run
+`npm ci` to install the IndexedDB test dependency.
 
 ## Documentation
 
@@ -149,3 +150,10 @@ and prevent rebinding at connection time; `validateDestination` is an integratio
 hook, not a DNS/egress implementation. Do not expose the default browser adapter
 as an unrestricted server proxy. Browsers may override the identifying User-Agent.
 Fetched HTML remains untrusted and must be sanitized by the rendering layer.
+
+## Private persistence
+
+SUK-136 supplies atomic IndexedDB persistence, v1→v2 migration, and private JSON
+backup/restore. See [`src/studio/README.md`](src/studio/README.md) for the UI
+integration API and failure behavior. Run `npm ci` then `npm test` for persistence
+and reader tests; `npm run test:fixtures` runs the contract gate.

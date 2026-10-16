@@ -290,9 +290,10 @@ hosted origin to access the same browser library. Browser storage availability
 and file-origin behavior depend on the browser; a storage failure blocks editing
 and reports the error without resetting existing data.
 
-Set a publication URL and title in **Library & publication**, then use **Write**
-for fragments and threads. Draft saves remain private. Preview uses the shared
-publication renderer; local publish creates a version, while the public ZIP is
+Use **Write** for private fragment and thread drafts, **Read** for subscriptions,
+and **Posts** to reopen drafts or published items. Publication setup is optional
+until you publish: set the canonical URL and title in **Publication**. Draft saves
+remain private. Preview shows composed content below the editor; local publish creates a version, while the public ZIP is
 what you deploy. Published items support editing/return, pins, withdrawal,
 preview, and forks of pinned versions. Threads support quotation directives,
 partial quotations, and ordinary internal links. The optional composition JSON
@@ -308,7 +309,7 @@ entries in the public export. Drafts, notes, feedback, and other reader state
 are never passed to the public exporter.
 
 Private backup download and inspected, confirmed replacement restore live in
-**Library & publication**. Restore downloads the current backup before replacing
+**Publication → Restore backup…**. Restore downloads the current backup before replacing
 the library. Save conflicts and storage errors retain editor input; reload a
 conflicting tab after preserving unsaved text. There is no automatic reset.
 Unsaved private notes and publication settings survive unrelated actions and
@@ -329,3 +330,5 @@ and unsubscribe preservation.
 Screenshots are saved under `.context/`. Phone hardware and WebKit validation,
 media-upload UI, hosting/deployment, and full release conformance remain outside
 this implementation.
+
+The shell check runs against an HTTP preview with `STUDIO_PREVIEW_URL=http://127.0.0.1:8765/dist/ node tools/test-shell-browser.mjs`; it covers first use, private drafts before setup, publication gating, navigation focus, 390px layout, 200% CSS zoom, and storage failures. The existing browser suite also accepts `STUDIO_PREVIEW_URL`.

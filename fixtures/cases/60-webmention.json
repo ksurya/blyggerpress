@@ -1,0 +1,452 @@
+[
+  {
+    "id": "webmention.send-remote-refs",
+    "description": "A publisher sends one mention per remote reference in a newly published version: remote stub_of, remote transclusions entries, cross-origin forked_from. Same-origin references never send.",
+    "module": "blyg/webmention",
+    "requirements": ["R5.6-3", "R10.3-4", "R10.6-5", "R15.2-1", "R15.2-2"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.2",
+    "given": "The thread T (remote transclusions), the stub S (remote stub_of) and the fork F (cross-origin forked_from).",
+    "expect": {
+      "outcome": "One mention per remote reference is enqueued with the correct relation; source is the item's absolute page and target is the target's absolute page.",
+      "asserts": [
+        "A remote transclusions entry sends relation transclusion.",
+        "A remote blyg-target stub sends relation stub; a cross-origin fork sends relation fork.",
+        "source is the referencing item's absolute page and target is the target's absolute page; same-origin references send nothing."
+      ]
+    },
+    "artifacts": [
+      "fixtures/wire/sample-blyg/items/3ev1cjtw7c6q5y8cd0r7aj3bhc.json",
+      "fixtures/wire/sample-blyg/items/7jbfafqm50v2w8xd9hkxz3yesh.json",
+      "fixtures/wire/sample-blyg/items/0ff73f8ranqzaf0b2n3qpxxzd7.json"
+    ]
+  },
+  {
+    "id": "webmention.discovery-order",
+    "description": "Endpoint discovery: the target origin's manifest webmention key, else W3C discovery on the target URL (Link header, then HTML link/a), else no endpoint (recorded, not retried).",
+    "module": "blyg/webmention",
+    "requirements": ["R15.2-3"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.2",
+    "given": "A target whose origin serves a manifest with a webmention key, and a target whose endpoint is only discoverable from its HTML.",
+    "expect": {
+      "outcome": "The manifest key wins when present; otherwise W3C discovery is attempted in order; if none is found the target is recorded as endpoint-less and not retried.",
+      "asserts": [
+        "The manifest webmention key is consulted first.",
+        "W3C discovery then tries the Link header, then an HTML link/a element.",
+        "No endpoint is recorded as such and is not retried indefinitely."
+      ]
+    },
+    "artifacts": ["fixtures/wire/remote-blyg/blyg.json"]
+  },
+  {
+    "id": "webmention.retry-backoff",
+    "description": "Retry with backoff on network failure or 5xx; 4xx is terminal except 429; any 2xx counts as sent.",
+    "module": "blyg/webmention",
+    "requirements": ["R15.2-4"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.2",
+    "given": "An outbound mention whose delivery returns a 5xx, then a 4xx, then a 429.",
+    "expect": {
+      "outcome": "5xx is retried with backoff; 4xx is terminal; 429 is retried; any 2xx marks the mention sent.",
+      "asserts": [
+        "Network failure and 5xx are retried with backoff.",
+        "4xx is terminal, except 429.",
+        "Any 2xx is recorded as sent."
+      ]
+    }
+  },
+  {
+    "id": "webmention.republish-resend",
+    "description": "Republish re-sends only for references that are new or whose target version changed.",
+    "module": "blyg/webmention",
+    "requirements": ["R15.2-5"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.2",
+    "given": "A republished item whose references are unchanged, plus one whose target version advanced.",
+    "expect": {
+      "outcome": "Only the changed-target reference is re-sent; unchanged references are not re-sent.",
+      "asserts": [
+        "New references are sent.",
+        "References whose target version changed are re-sent.",
+        "Unchanged references are not re-sent."
+      ]
+    }
+  },
+  {
+    "id": "webmention.withdrawal-resend",
+    "description": "Withdrawal re-sends once for a withdrawn stub so the receiver marks the mention gone.",
+    "module": "blyg/webmention",
+    "requirements": ["R15.2-6"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.2",
+    "given": "A stub that is later withdrawn (its endcap omits stub_of).",
+    "expect": {
+      "outcome": "Exactly one re-send is enqueued for the previously stubbed target.",
+      "asserts": [
+        "A withdrawn stub re-sends once.",
+        "The re-send lets the receiver mark the mention gone.",
+        "The withdrawn endcap omits stub_of."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/7jbfafqm50v2w8xd9hkxz3yesh.json"]
+  },
+  {
+    "id": "webmention.fire-and-forget",
+    "description": "Delivery is fire-and-forget: publish MUST NOT block on it and outbound status is information, never a publish outcome.",
+    "module": "blyg/webmention",
+    "requirements": ["R15.2-7"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.2",
+    "given": "A publish event with outbound mentions whose delivery is slow or failing.",
+    "expect": {
+      "outcome": "Publishing completes immediately; mention status is shown as information only.",
+      "asserts": [
+        "Publish does not block on mention delivery.",
+        "Outbound status is informational.",
+        "A delivery failure never fails the publish."
+      ]
+    }
+  },
+  {
+    "id": "webmention.receive-202",
+    "description": "The endpoint accepts POST application/x-www-form-urlencoded with source and target, returns 202, records the pair as pending, and verifies asynchronously; a re-sent pair re-verifies rather than duplicating.",
+    "module": "worker/webmention",
+    "requirements": ["R15.3-1", "R15.3-4"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.3",
+    "given": "A well-formed POST naming an absolute source and a target within this blyg's origin that names a published item.",
+    "expect": {
+      "outcome": "The endpoint returns 202, records the (source,target) pair as pending, and verifies asynchronously; a duplicate pair re-verifies instead of duplicating.",
+      "asserts": [
+        "The request body is form-encoded with source and target.",
+        "Accept returns 202 and records the pair pending.",
+        "A re-sent pair re-verifies rather than creating a duplicate."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/7jbfafqm50v2w8xd9hkxz3yesh.json"]
+  },
+  {
+    "id": "webmention.receive-400",
+    "description": "Syntactic checks return 400: both URLs absolute http(s); source != target; target within this blyg's own origin and naming a published item; unknown item is 400; a withdrawn target is accepted.",
+    "module": "worker/webmention",
+    "requirements": ["R15.3-2"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.3",
+    "given": "Malformed and out-of-scope POSTs: relative URL, source==target, foreign-origin target, unknown item id, and a withdrawn target.",
+    "expect": {
+      "outcome": "The malformed and out-of-scope cases return 400; the withdrawn target is accepted.",
+      "asserts": [
+        "Both URLs must be absolute http(s) and source != target.",
+        "The target must be within this blyg's origin and name a published item.",
+        "An unknown item is 400; a withdrawn target is accepted."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/3wh683yzk9m9byd7tr17fpaxfs.json"]
+  },
+  {
+    "id": "webmention.receive-429",
+    "description": "Rate limits return 429: per source host, per coarser source group, and a global cap; a refused claim is never queued.",
+    "module": "worker/webmention",
+    "requirements": ["R15.3-3"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.3",
+    "given": "A burst of mentions from one source host, a wider source group, and a global flood.",
+    "expect": {
+      "outcome": "The applicable limit returns 429 and the refused claim is never queued.",
+      "asserts": [
+        "Limits exist per source host, per coarser source group, and globally.",
+        "A refused claim returns 429 and is not queued.",
+        "Rate limiting keeps the verification queue finite."
+      ]
+    }
+  },
+  {
+    "id": "webmention.verify-bounds",
+    "description": "Verification is bounded: at most 2 fetches (3 under 0.4 templates), at most 3 redirects, 5 seconds per fetch, 1 MB per body. These bounds are MUSTs.",
+    "module": "worker/webmention",
+    "requirements": ["R14-3", "R15.4-1"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.4",
+    "given": "A pending mention whose source must be fetched and possibly re-fetched via rel=alternate.",
+    "expect": {
+      "outcome": "Verification stays within the hard bounds and fails closed when they are exceeded.",
+      "asserts": [
+        "At most 2 fetches (3 under 0.4 templates).",
+        "At most 3 redirects, 5 seconds per fetch, 1 MB per body.",
+        "The rate limit keeps the queue finite."
+      ]
+    }
+  },
+  {
+    "id": "webmention.verify-html-alternate",
+    "description": "GET source: JSON with a blyg key is the item document; HTML is followed via rel=alternate application/json; anything else fails.",
+    "module": "worker/webmention",
+    "requirements": ["R15.4-2"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.4",
+    "given": "A source URL that returns HTML carrying <link rel=\"alternate\" type=\"application/json\">.",
+    "expect": {
+      "outcome": "The alternate JSON is fetched and used; JSON-with-blyg is accepted directly; any other content type fails.",
+      "asserts": [
+        "JSON with a blyg key is the item document.",
+        "HTML is followed via rel=alternate application/json.",
+        "Anything else fails verification."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/f/1jt332depwffcsyfz9txf8c9r9/index.html"]
+  },
+  {
+    "id": "webmention.verify-mirror-fails",
+    "description": "The item document's final URL must be exactly {origin}items/{id}.json for the document's own origin and id (normalized); a mirror copy never verifies.",
+    "module": "worker/webmention",
+    "requirements": ["R15.4-3"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.4",
+    "given": "A source document fetched from an origin/path other than its own {origin}items/{id}.json.",
+    "expect": {
+      "outcome": "Verification fails: the final URL does not match the document's own origin and id.",
+      "asserts": [
+        "The final URL must equal {origin}items/{id}.json (normalized).",
+        "A mirrored copy fails verification.",
+        "Redirects do not excuse the mismatch."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/1jt332depwffcsyfz9txf8c9r9.json"]
+  },
+  {
+    "id": "webmention.verify-pinned-file-fails",
+    "description": "A pinned version file never verifies a mention; only the canonical item document does.",
+    "module": "worker/webmention",
+    "requirements": ["R15.4-3"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.4",
+    "given": "A source URL pointing at items/{id}/v2.json rather than the canonical document.",
+    "expect": {
+      "outcome": "Verification fails because the final URL is not {origin}items/{id}.json.",
+      "asserts": [
+        "A pinned version file never verifies a mention.",
+        "Only the canonical item document path verifies.",
+        "The mismatch is rejected regardless of content."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/1jt332depwffcsyfz9txf8c9r9/v2.json"]
+  },
+  {
+    "id": "webmention.verify-withdrawn-gone",
+    "description": "A source document with kind withdrawn is gone.",
+    "module": "worker/webmention",
+    "requirements": ["R15.4-4"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.4",
+    "given": "A verified source document whose kind is withdrawn.",
+    "expect": {
+      "outcome": "The mention is marked gone rather than verified.",
+      "asserts": [
+        "kind=withdrawn is gone.",
+        "The mention record is kept and marked gone.",
+        "No content is stored."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/3wh683yzk9m9byd7tr17fpaxfs.json"]
+  },
+  {
+    "id": "webmention.verify-stub",
+    "description": "Relation is stub when the source's stub_of names this blyg.",
+    "module": "worker/webmention",
+    "requirements": ["R15-1", "R15.4-5"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.4",
+    "given": "The stub S whose stub_of names the target item at this blyg.",
+    "expect": {
+      "outcome": "The mention verifies with relation stub.",
+      "asserts": [
+        "A receiver believes a mention only when the fetched source names the target with a reference.",
+        "stub_of naming this blyg yields relation stub.",
+        "Identity members are compared; cited is ignored."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/7jbfafqm50v2w8xd9hkxz3yesh.json"]
+  },
+  {
+    "id": "webmention.verify-transclusion",
+    "description": "Relation is transclusion when a transclusions entry has this blyg as origin.",
+    "module": "worker/webmention",
+    "requirements": ["R15.4-5"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.4",
+    "given": "A source document with a transclusions entry whose origin is this blyg.",
+    "expect": {
+      "outcome": "The mention verifies with relation transclusion.",
+      "asserts": [
+        "A transclusions entry originating at this blyg yields relation transclusion.",
+        "Only identity members are compared.",
+        "The entry's version is recorded."
+      ]
+    }
+  },
+  {
+    "id": "webmention.verify-fork-pinned",
+    "description": "Relation is fork when forked_from names a pinned version of the target.",
+    "module": "worker/webmention",
+    "requirements": ["R15.4-5"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.4",
+    "given": "The fork F whose forked_from names a pinned version of a target at this blyg.",
+    "expect": {
+      "outcome": "The mention verifies with relation fork.",
+      "asserts": [
+        "forked_from naming a pinned version of the target yields relation fork.",
+        "The named version must be pinned.",
+        "cited is ignored in the comparison."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/items/0ff73f8ranqzaf0b2n3qpxxzd7.json"]
+  },
+  {
+    "id": "webmention.verify-fork-unpinned-fails",
+    "description": "A forked_from naming an unpinned version does not verify a fork.",
+    "module": "worker/webmention",
+    "requirements": ["R15.4-5"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.4",
+    "given": "A source whose forked_from names a version that is not pinned at the target.",
+    "expect": {
+      "outcome": "Verification does not yield fork; without another matching reference it fails.",
+      "asserts": [
+        "The referenced version must be pinned.",
+        "An unpinned reference does not verify a fork.",
+        "The relation order is stub, transclusion, fork, failed."
+      ]
+    }
+  },
+  {
+    "id": "webmention.verify-failed",
+    "description": "If no reference names this blyg, the relation is failed.",
+    "module": "worker/webmention",
+    "requirements": ["R15.4-5"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.4",
+    "given": "A source document that names this blyg nowhere (or only as text).",
+    "expect": {
+      "outcome": "The mention fails verification; no relation is recorded.",
+      "asserts": [
+        "Relation order is stub, transclusion, fork, then failed.",
+        "Comparisons read identity members only and ignore cited.",
+        "A plain-text mention is not a structural reference."
+      ]
+    }
+  },
+  {
+    "id": "webmention.no-content-stored",
+    "description": "On success the receiver records id/origin/version/kind/relation/author/page; NO content is stored.",
+    "module": "worker/webmention",
+    "requirements": ["R15.4-6"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.4",
+    "given": "A successfully verified mention.",
+    "expect": {
+      "outcome": "Only pointer metadata is stored; no content_md/content_html is retained.",
+      "asserts": [
+        "The record holds id, origin, version, kind, relation, author and page.",
+        "No content is stored.",
+        "A verified mention is a pointer, not a copy."
+      ]
+    },
+    "artifacts": ["fixtures/store/sample-store.json"]
+  },
+  {
+    "id": "webmention.reverify-becomes-gone",
+    "description": "A re-sent mention re-verifies and updates its record; a mention verified before that fails now becomes gone and the record is kept.",
+    "module": "worker/webmention",
+    "requirements": ["R15.4-7"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.4",
+    "given": "A previously verified mention whose source now fails to name the target.",
+    "expect": {
+      "outcome": "The re-verification flips the record to gone; the record is retained.",
+      "asserts": [
+        "Re-sent mentions re-verify and update the record.",
+        "A previously verified mention that now fails becomes gone.",
+        "The record is kept, not deleted."
+      ]
+    },
+    "artifacts": ["fixtures/store/sample-store.json"]
+  },
+  {
+    "id": "webmention.curation-no-auto-publish",
+    "description": "Verified mentions are studio signals: never auto-published, never in the feed/index/item documents; a publisher MAY display them only as per-item curation.",
+    "module": "blyg/render",
+    "requirements": ["R13.5-3", "R15.5-1"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.5",
+    "given": "A blyg with verified inbound mentions on its items.",
+    "expect": {
+      "outcome": "Mentions appear only as per-item curation, never auto-published and never in any protocol surface.",
+      "asserts": [
+        "Mentions are never auto-published.",
+        "They never appear in feed, index or item documents.",
+        "Any display is per-item curation only."
+      ]
+    },
+    "artifacts": ["fixtures/store/sample-store.json", "fixtures/wire/sample-blyg/feed.xml"]
+  },
+  {
+    "id": "webmention.plain-apart",
+    "description": "Plain (non-structural) mentions, if accepted, MUST be held apart from structurally verified mentions as a lower class.",
+    "module": "worker/webmention",
+    "requirements": ["R15.6-1"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.6",
+    "given": "A source that mentions the target without any structural reference.",
+    "expect": {
+      "outcome": "If accepted at all, a plain mention is stored as a lower class distinct from verified structural mentions.",
+      "asserts": [
+        "Accepting plain mentions is a MAY; if accepted they are held apart.",
+        "Plain mentions are held apart from verified mentions.",
+        "They are never presented as structurally verified."
+      ]
+    }
+  },
+  {
+    "id": "webmention.static-conformant",
+    "description": "A static-only deployment advertises no endpoint, receives nothing, and remains fully conformant at every level.",
+    "module": "blyg/export",
+    "requirements": ["R15.7-1"],
+    "issue": "SUK-144",
+    "check": "spec",
+    "spec": "15.7",
+    "given": "A published blyg served entirely as static files, with no webmention key in its manifest.",
+    "expect": {
+      "outcome": "No endpoint is advertised, nothing is received, and the deployment is fully conformant.",
+      "asserts": [
+        "The manifest omits the webmention key.",
+        "No receiving behaviour is required.",
+        "Static-only deployment is conformant at every level."
+      ]
+    }
+  }
+]

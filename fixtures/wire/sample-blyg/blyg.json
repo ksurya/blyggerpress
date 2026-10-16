@@ -1,0 +1,23 @@
+{
+  "blyg": "0.3",
+  "level": 2,
+  "generator": "blyggerpress-fixture/1.0.0",
+  "generator_url": "https://example.org/blyggerpress-fixture",
+  "site": "https://example.com/blyg/",
+  "title": "Example Studio blyg",
+  "author": {
+    "name": "Example Author",
+    "bio": "A fixture blyg.",
+    "links": [
+      {
+        "label": "Home",
+        "url": "https://example.com/"
+      }
+    ]
+  },
+  "feed": "feed.xml",
+  "items": "items/index.json",
+  "blogroll": "blogroll.opml",
+  "webmention": "webmention",
+  "updated": "2026-07-24T09:00:00Z"
+}

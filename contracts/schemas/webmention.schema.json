@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "blygpress:webmention",
+  "title": "Webmention request, outbound record, and verification result",
+  "description": "The W3C mechanism reused without invention (POST source/target) plus structural verification (spec 15). OPTIONAL at every level; a static-only deployment advertises no endpoint and remains conformant.",
+  "$defs": {
+    "Request": {
+      "type": "object",
+      "description": "Body of the form-encoded POST (spec 15.3).",
+      "required": ["source", "target"],
+      "properties": {
+        "source": { "type": "string" },
+        "target": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "Status": {
+      "type": "string",
+      "description": "Lifecycle of an inbound mention. 'gone' is set when a source that verified before now fails, including a withdrawal endcap (spec 15.4).",
+      "enum": ["pending", "verified", "gone", "failed"]
+    },
+    "OutboundRecord": {
+      "type": "object",
+      "description": "Sender-side record of one outbound mention; delivery is fire-and-forget and never a publish outcome (spec 15.2).",
+      "required": ["source", "target"],
+      "properties": {
+        "source": { "type": "string" },
+        "target": { "type": "string" },
+        "relation": { "$ref": "blygpress:common#/$defs/Relation" },
+        "targetVersionSeen": { "type": "integer", "minimum": 1, "description": "Used to re-send only when new or changed (spec 15.2)." },
+        "endpoint": { "type": ["string", "null"] },
+        "attempts": { "type": "integer", "minimum": 0 },
+        "nextAttemptAt": { "type": ["string", "null"] },
+        "state": { "type": "string", "enum": ["queued", "sent", "abandoned", "no-endpoint"] }
+      },
+      "additionalProperties": true
+    },
+    "VerificationResult": {
+      "type": "object",
+      "description": "What a receiver records after structural verification. A pointer only: NO content is stored (spec 15.4 rule 5).",
+      "required": ["source", "target", "status"],
+      "properties": {
+        "source": { "type": "string" },
+        "target": { "type": "string" },
+        "status": { "$ref": "#/$defs/Status" },
+        "relation": { "$ref": "blygpress:common#/$defs/Relation" },
+        "sourceId": { "$ref": "blygpress:common#/$defs/Id" },
+        "sourceOrigin": { "type": "string" },
+        "sourceVersion": { "type": "integer", "minimum": 1 },
+        "sourceKind": { "type": "string" },
+        "sourceAuthor": { "$ref": "blygpress:common#/$defs/Author" },
+        "sourcePage": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "x-conformance": {
+    "spec": ["14", "15", "15.1", "15.2", "15.3", "15.4", "15.5", "15.6", "15.7"],
+    "issue": "SUK-144",
+    "notes": [
+      "Verification reads a reference's identity members only and MUST NOT consult cited (spec 15.4).",
+      "The relation set is exactly stub, transclusion, fork (spec 15.4).",
+      "Plain (non-structural) mentions, if accepted, MUST be held apart (spec 15.6).",
+      "Bounds are MUSTs: at most 2 fetches (3 under templates), 3 redirects, 5s per fetch, 1MB per body (spec 14, 15.4)."
+    ]
+  }
+}

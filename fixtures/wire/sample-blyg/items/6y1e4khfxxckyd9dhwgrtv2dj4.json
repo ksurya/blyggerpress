@@ -1,0 +1,31 @@
+{
+  "blyg": "0.3",
+  "id": "6y1e4khfxxckyd9dhwgrtv2dj4",
+  "kind": "fragment",
+  "origin": "https://example.com/blyg/",
+  "page": "f/6y1e4khfxxckyd9dhwgrtv2dj4/",
+  "author": {
+    "name": "Venkatesh Rao",
+    "url": "https://example.com/blyg/"
+  },
+  "created": "2026-07-18T12:00:00Z",
+  "updated": "2026-07-18T12:00:00Z",
+  "version": 1,
+  "content_md": "A diagram: ![a diagram](media/x7f2.png)",
+  "content_html": "<p>A diagram: <img src=\"https://example.com/blyg/media/x7f2.png\" alt=\"a diagram\"></p>",
+  "content_hash": "sha256:53219ecc311eb618292810b768ee41310355f042b93e8db63087a54b2c7804b1",
+  "media": [
+    {
+      "url": "media/x7f2.png",
+      "mime": "image/png",
+      "alt": "a diagram"
+    }
+  ],
+  "changelog": [
+    {
+      "version": 1,
+      "at": "2026-07-18T12:00:00Z",
+      "note": null
+    }
+  ]
+}

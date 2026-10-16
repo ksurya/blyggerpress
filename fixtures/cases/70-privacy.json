@@ -1,0 +1,50 @@
+[
+  {
+    "id": "privacy.sample-publication",
+    "description": "The fail-closed publication boundary: none of the studio's private tokens (notes, ranking intent, generation instructions, unpublished drafts) may appear anywhere in the published blyg surface.",
+    "module": "blyg/export",
+    "requirements": ["R5.7-2", "R13.5-1", "R14-1"],
+    "issue": "SUK-136",
+    "check": "privacy",
+    "site": "fixtures/wire/sample-blyg",
+    "forbidden": ["PRIVATE-NOTE-SECRET", "PRIVATE-INTENT", "PRIVATE-INSTRUCTION-SECRET", "DRAFT-ONLY"],
+    "store": "fixtures/store/sample-store.json",
+    "expectInStore": ["PRIVATE-NOTE-SECRET", "PRIVATE-INTENT", "PRIVATE-INSTRUCTION-SECRET", "DRAFT-ONLY"]
+  },
+  {
+    "id": "store.generated-instructions-private",
+    "description": "The generated array MUST NOT carry instruction text or any other pre-generation authoring state; that state lives only in the private store.",
+    "module": "studio/store",
+    "requirements": ["R5.7-2"],
+    "issue": "SUK-136",
+    "check": "privacy",
+    "site": "fixtures/wire/sample-blyg",
+    "forbidden": ["PRIVATE-INSTRUCTION-SECRET"],
+    "store": "fixtures/store/sample-store.json",
+    "expectInStore": ["PRIVATE-INSTRUCTION-SECRET"]
+  },
+  {
+    "id": "store.subscription-invisible",
+    "description": "There is no protocol follow: subscribing is invisible client-local state, so subscription records and their fields never appear in the publication output.",
+    "module": "blyg/store",
+    "requirements": ["R11-6"],
+    "issue": "SUK-136",
+    "check": "privacy",
+    "site": "fixtures/wire/sample-blyg",
+    "forbidden": ["sub-remote", "sub-legacy", "blogrollVisible", "identityOrigin", "follower"],
+    "store": "fixtures/store/sample-store.json",
+    "expectInStore": ["sub-remote", "sub-legacy", "blogrollVisible"]
+  },
+  {
+    "id": "reconcile.no-re-emission",
+    "description": "Imported items are never re-emitted: reader-local fields (watermark, observedAt, retainedPinnedVersion, discrepancies) must not appear anywhere in the publisher's feed, archive index, or item documents.",
+    "module": "blyg/export",
+    "requirements": ["R13.5-1"],
+    "issue": "SUK-138",
+    "check": "privacy",
+    "site": "fixtures/wire/sample-blyg",
+    "forbidden": ["retainedPinnedVersion", "observedAt", "discrepancies", "watermark"],
+    "store": "fixtures/store/sample-store.json",
+    "expectInStore": ["retainedPinnedVersion", "observedAt", "discrepancies", "watermark"]
+  }
+]

@@ -1,0 +1,63 @@
+{
+  "blyg": "0.3",
+  "id": "3ev1cjtw7c6q5y8cd0r7aj3bhc",
+  "kind": "thread",
+  "origin": "https://example.com/blyg/",
+  "page": "t/3ev1cjtw7c6q5y8cd0r7aj3bhc/",
+  "author": {
+    "name": "Venkatesh Rao",
+    "url": "https://example.com/blyg/"
+  },
+  "created": "2026-07-19T08:00:00Z",
+  "updated": "2026-07-20T10:00:00Z",
+  "version": 2,
+  "content_md": "# A thread about protocol\n\nMarkdown source of the *latest* version.\n\n![[1jt332depwffcsyfz9txf8c9r9]]\n\n![[7gvp7ms7wq4nks6erdbbdp8cqc]]\n\n![[5gb4pd4d8bme2zzkq7t46zkkhx]]\n> Stigmergy is what a protocol looks like from inside\n\nCommentary: the quote above deliberates whether the mechanism is [[1jt332depwffcsyfz9txf8c9r9]].\n",
+  "content_html": "<h1>A thread about protocol</h1>\n<p>Markdown source of the <em>latest</em> version.</p>\n<blockquote class=\"blyg-transclusion\" data-blyg-id=\"1jt332depwffcsyfz9txf8c9r9\" data-blyg-version=\"3\"><p>Markdown source of the <em>latest</em> version.</p></blockquote>\n<blockquote class=\"blyg-transclusion\" data-blyg-id=\"7gvp7ms7wq4nks6erdbbdp8cqc\" data-blyg-version=\"1\" data-blyg-origin=\"https://blyg.protocol-institute.org/\"><p>Remote fragment content.</p></blockquote>\n<blockquote class=\"blyg-transclusion blyg-partial\" data-blyg-id=\"5gb4pd4d8bme2zzkq7t46zkkhx\" data-blyg-version=\"1\" data-blyg-origin=\"https://blyg.protocol-institute.org/\"><p>Stigmergy is what a protocol looks like from inside</p></blockquote>\n<div class=\"blyg-tk-gen\"><p>Commentary: the quote above deliberates whether the mechanism is <a href=\"https://example.com/blyg/f/1jt332depwffcsyfz9txf8c9r9/\">desirable</a>.</p></div>\n",
+  "content_hash": "sha256:021131e1c59be2a93bf4cd67f603468b53d88ee00d69e36487bcd7059a57e9c4",
+  "changelog": [
+    {
+      "version": 1,
+      "at": "2026-07-19T08:00:00Z",
+      "note": null
+    },
+    {
+      "version": 2,
+      "at": "2026-07-20T10:00:00Z",
+      "note": "added the remote quote",
+      "generated": true
+    }
+  ],
+  "transclusions": [
+    {
+      "id": "1jt332depwffcsyfz9txf8c9r9",
+      "version": 3
+    },
+    {
+      "id": "7gvp7ms7wq4nks6erdbbdp8cqc",
+      "version": 1,
+      "origin": "https://blyg.protocol-institute.org/"
+    },
+    {
+      "id": "5gb4pd4d8bme2zzkq7t46zkkhx",
+      "version": 1,
+      "origin": "https://blyg.protocol-institute.org/",
+      "selector": {
+        "exact": "Stigmergy is what a protocol looks like from inside",
+        "prefix": "",
+        "suffix": ", and the reason it looks like nothing at all is the point."
+      }
+    }
+  ],
+  "generated": [
+    {
+      "sources": [
+        {
+          "id": "1jt332depwffcsyfz9txf8c9r9",
+          "version": 3
+        }
+      ],
+      "model": "fixture-model-1",
+      "at": "2026-07-20T09:50:00Z"
+    }
+  ]
+}

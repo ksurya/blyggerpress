@@ -1,0 +1,52 @@
+{
+  "channel": {
+    "title": "Example Studio blyg",
+    "link": "https://example.com/blyg/",
+    "description": "Fixture feed (lossy notification plane).",
+    "lastBuildDate": "Fri, 24 Jul 2026 09:00:00 GMT",
+    "level": 2,
+    "manifest": "https://example.com/blyg/blyg.json"
+  },
+  "entries": [
+    {
+      "guid": "blyg:0ff73f8ranqzaf0b2n3qpxxzd7:v1",
+      "link": "https://example.com/blyg/f/0ff73f8ranqzaf0b2n3qpxxzd7/",
+      "title": "Remote fragment content.",
+      "descriptionHtml": "<p>Remote fragment content.</p>\n<blockquote><p>Remote fragment content.</p><p>— quoted from <a href=\"https://blyg.protocol-institute.org/f/7gvp7ms7wq4nks6erdbbdp8cqc/\">blyg.protocol-institute.org · v1</a></p></blockquote>\n<p>My own continuation of the thought.</p>",
+      "pubDate": "Fri, 24 Jul 2026 09:00:00 GMT",
+      "id": "0ff73f8ranqzaf0b2n3qpxxzd7",
+      "kind": "fragment",
+      "version": 1,
+      "created": "2026-07-24T09:00:00Z",
+      "itemUrl": "https://example.com/blyg/items/0ff73f8ranqzaf0b2n3qpxxzd7.json",
+      "creator": "Venkatesh Rao"
+    },
+    {
+      "guid": "blyg:3wh683yzk9m9byd7tr17fpaxfs:v2",
+      "link": "https://example.com/blyg/f/3wh683yzk9m9byd7tr17fpaxfs/",
+      "title": "withdrawn",
+      "descriptionHtml": "",
+      "pubDate": "Thu, 23 Jul 2026 09:00:00 GMT",
+      "id": "3wh683yzk9m9byd7tr17fpaxfs",
+      "kind": "withdrawn",
+      "version": 2,
+      "created": "2026-07-22T09:00:00Z",
+      "itemUrl": "https://example.com/blyg/items/3wh683yzk9m9byd7tr17fpaxfs.json"
+    },
+    {
+      "guid": "blyg:1jt332depwffcsyfz9txf8c9r9:v1",
+      "link": "https://example.com/blyg/f/1jt332depwffcsyfz9txf8c9r9/",
+      "title": "Markdown source of the latest…",
+      "descriptionHtml": "<p>Markdown source of the <em>latest</em> version.</p>",
+      "pubDate": "Fri, 17 Jul 2026 18:00:00 GMT",
+      "id": "1jt332depwffcsyfz9txf8c9r9",
+      "kind": "fragment",
+      "version": 1,
+      "created": "2026-07-17T18:00:00Z",
+      "itemUrl": "https://example.com/blyg/items/1jt332depwffcsyfz9txf8c9r9.json",
+      "creator": "Venkatesh Rao"
+    }
+  ],
+  "legacy": false,
+  "_note": "Representative window head (spec 7). The entry for A v1 keeps its own blyg:version=1 but its description carries the LATEST version's HTML (v3). The withdrawn item contributes exactly one entry."
+}

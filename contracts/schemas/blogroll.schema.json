@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "blygpress:blogroll",
+  "title": "Normalized blogroll model (reader-side parse of blogroll.opml)",
+  "description": "Standard OPML 2.0 with no extensions (spec 11). The blogroll is curated and claims no completeness; readers and crawlers MUST NOT treat it as everything the publisher follows.",
+  "type": "object",
+  "required": ["outlines"],
+  "properties": {
+    "title": { "type": "string" },
+    "outlines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["xmlUrl"],
+        "properties": {
+          "type": { "type": "string", "const": "rss" },
+          "text": { "type": "string" },
+          "title": { "type": "string" },
+          "xmlUrl": { "type": "string", "description": "The subscription's feed URL." },
+          "htmlUrl": { "type": "string", "description": "Its origin, or page URL for a legacy feed." }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true,
+  "x-conformance": {
+    "spec": ["11"],
+    "issue": "SUK-138",
+    "notes": [
+      "No blyg-specific OPML attributes exist; the feed's <blyg:manifest> supplies blyg upgrade on resolve (spec 11, 12.1).",
+      "A blyg with nothing to show serves no blogroll.opml (404) and omits the manifest key (spec 11)."
+    ]
+  }
+}

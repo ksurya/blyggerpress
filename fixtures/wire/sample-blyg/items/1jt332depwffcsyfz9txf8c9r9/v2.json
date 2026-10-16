@@ -1,0 +1,18 @@
+{
+  "blyg": "0.3",
+  "id": "1jt332depwffcsyfz9txf8c9r9",
+  "kind": "fragment",
+  "version": 2,
+  "at": "2026-07-17T21:12:00Z",
+  "note": "typo",
+  "pinned": true,
+  "origin": "https://example.com/blyg/",
+  "page": "f/1jt332depwffcsyfz9txf8c9r9/",
+  "author": {
+    "name": "Venkatesh Rao",
+    "url": "https://example.com/blyg/"
+  },
+  "content_md": "Markdown source of the latest version.",
+  "content_html": "<p>Markdown source of the latest version.</p>",
+  "content_hash": "sha256:1e07751f1fd5c9581e76c1db46671b183a2672a986661f3b87fc64304d058109"
+}

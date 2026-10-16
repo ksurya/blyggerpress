@@ -1,0 +1,30 @@
+{
+  "blyg": "0.3",
+  "id": "5gb4pd4d8bme2zzkq7t46zkkhx",
+  "kind": "thread",
+  "origin": "https://blyg.protocol-institute.org/",
+  "page": "t/5gb4pd4d8bme2zzkq7t46zkkhx/",
+  "author": {
+    "name": "Editor",
+    "url": "https://blyg.protocol-institute.org/"
+  },
+  "created": "2026-07-16T21:00:00Z",
+  "updated": "2026-07-16T21:00:00Z",
+  "version": 1,
+  "content_md": "![[7gvp7ms7wq4nks6erdbbdp8cqc]]\n\nStigmergy is what a protocol looks like from inside, and the reason it looks like nothing at all is the point.",
+  "content_html": "<blockquote class=\"blyg-transclusion\" data-blyg-id=\"7gvp7ms7wq4nks6erdbbdp8cqc\" data-blyg-version=\"1\"><p>Remote fragment content.</p></blockquote>\n<p>Stigmergy is what a protocol looks like from inside, and the reason it looks like nothing at all is the point.</p>",
+  "content_hash": "sha256:7a1e834d9f29a420637608150da4888dd95c2383dc7267bbc424aa154c70cdc7",
+  "changelog": [
+    {
+      "version": 1,
+      "at": "2026-07-16T21:00:00Z",
+      "note": null
+    }
+  ],
+  "transclusions": [
+    {
+      "id": "7gvp7ms7wq4nks6erdbbdp8cqc",
+      "version": 1
+    }
+  ]
+}

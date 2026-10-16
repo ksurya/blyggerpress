@@ -1,0 +1,258 @@
+[
+  {
+    "id": "resolution.direct-blyg",
+    "description": "Step 2 of the six-step resolution procedure: an origin already serving blyg.json at the mount root resolves without further probing.",
+    "module": "blyg/resolve",
+    "requirements": ["R12.1-1"],
+    "issue": "SUK-139",
+    "check": "spec",
+    "spec": "12.1",
+    "given": "A subscription URL whose path at the same origin already serves a blyg manifest (the sample blyg at https://example.com/blyg/).",
+    "expect": {
+      "outcome": "Resolved on the direct probe; identity is the final fetch origin and the mount path is not interpreted.",
+      "asserts": [
+        "The procedure order is normalize, direct probe, feed upgrade, rel probe, conventional-mount probes, RSS fallback.",
+        "The direct probe is attempted before any HTML fetch.",
+        "Nothing is inferred from the mount path (spec 4)."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/blyg.json"]
+  },
+  {
+    "id": "resolution.feed-upgrade",
+    "description": "Step 3: a URL that is itself a blyg feed (or a feed-linked page) upgrades to the blyg surface via the feed's <blyg:manifest> hook.",
+    "module": "blyg/resolve",
+    "requirements": ["R12.1-1"],
+    "issue": "SUK-139",
+    "check": "spec",
+    "spec": "12.1",
+    "given": "A subscription URL whose document is feed.xml, whose channel carries <blyg:manifest> naming the absolute manifest.",
+    "expect": {
+      "outcome": "Resolved as a blyg subscription by following the feed's manifest hook; the manifest URL becomes the mount root.",
+      "asserts": [
+        "The feed upgrade runs after the direct probe and before the rel probe.",
+        "The <blyg:manifest> value is absolute and names the manifest, per spec 7.",
+        "Identity is the final fetch origin, never the manifest's self-asserted site."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/feed.xml"]
+  },
+  {
+    "id": "resolution.rel-probe",
+    "description": "Step 4: an HTML page advertises its blyg via <link rel=\"blyg\">; supporting an equivalent HTTP Link header is OPTIONAL.",
+    "module": "blyg/resolve",
+    "requirements": ["R12.1-1", "R12.1-2"],
+    "issue": "SUK-139",
+    "check": "spec",
+    "spec": "12.1",
+    "given": "A subscription URL returning HTML whose <head> carries <link rel=\"blyg\" href=\"...blyg.json\">.",
+    "expect": {
+      "outcome": "The rel probe succeeds and resolves to the advertised manifest, consuming at most one rel hop.",
+      "asserts": [
+        "The HTML <link rel=\"blyg\"> element MUST be supported.",
+        "Supporting an equivalent HTTP Link response header is OPTIONAL.",
+        "At most one rel hop is followed."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/index.html"]
+  },
+  {
+    "id": "resolution.conventional-mount",
+    "description": "Step 5: when nothing is advertised, the reader probes conventional mount points for blyg.json.",
+    "module": "blyg/resolve",
+    "requirements": ["R12.1-1"],
+    "issue": "SUK-139",
+    "check": "spec",
+    "spec": "12.1",
+    "given": "A subscription URL returning HTML with no blyg link element and no feed manifest hook.",
+    "expect": {
+      "outcome": "The reader tries the conventional-mount probes and resolves if one serves a manifest, otherwise falls through to RSS fallback.",
+      "asserts": [
+        "Conventional-mount probing runs only after the direct, feed-upgrade and rel probes fail.",
+        "The whole procedure stays within at most 6 fetches.",
+        "Relative surface file names are protocol-fixed (spec 4)."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/blyg.json"]
+  },
+  {
+    "id": "resolution.rss-fallback",
+    "description": "Step 6: when no blyg surface is found, the reader falls back to plain RSS (L0) and subscribes in legacy mode.",
+    "module": "blyg/resolve",
+    "requirements": ["R12.1-1"],
+    "issue": "SUK-139",
+    "check": "spec",
+    "spec": "12.1",
+    "given": "A subscription URL that only serves an ordinary RSS/Atom feed with no blyg namespace.",
+    "expect": {
+      "outcome": "The subscription is stored in legacy (L0) mode with the feed URL as identity; content is wrapped per spec 13.6.",
+      "asserts": [
+        "RSS fallback is the last step and runs only after all blyg probes fail.",
+        "L0 mode yields no versions, no withdrawal and no archive index for that origin.",
+        "The origin identity is the final fetch URL."
+      ]
+    }
+  },
+  {
+    "id": "resolution.failure",
+    "description": "When every step fails the subscription is not created; the six-step procedure terminates in bounded failure.",
+    "module": "blyg/resolve",
+    "requirements": ["R12.1-1"],
+    "issue": "SUK-139",
+    "check": "spec",
+    "spec": "12.1",
+    "given": "A subscription URL that returns no blyg surface and no usable RSS feed.",
+    "expect": {
+      "outcome": "Resolution fails with a surfaced error and no subscription is recorded.",
+      "asserts": [
+        "All six steps were attempted in order within the fetch budget.",
+        "The failure is surfaced to the user rather than silently stored.",
+        "No partial subscription state is persisted."
+      ]
+    }
+  },
+  {
+    "id": "resolution.identity-origin",
+    "description": "Subscription identity is the final fetch origin, never the manifest's self-asserted site; the mount path carries no meaning.",
+    "module": "blyg/resolve",
+    "requirements": ["R4-1", "R12.2-1"],
+    "issue": "SUK-139",
+    "check": "spec",
+    "spec": "12.2",
+    "given": "The sample blyg served at https://example.com/blyg/ whose manifest asserts site=https://example.com/blyg/.",
+    "expect": {
+      "outcome": "Identity is the final fetch origin (https://example.com/blyg/); readers infer nothing from the /blyg/ mount path.",
+      "asserts": [
+        "Readers MUST NOT infer anything from the mount path.",
+        "Identity is the final fetch origin, not the asserted site.",
+        "Ids are scoped to that origin."
+      ]
+    },
+    "artifacts": ["fixtures/wire/sample-blyg/blyg.json"]
+  },
+  {
+    "id": "resolution.site-disagreement",
+    "description": "When the manifest's self-asserted site disagrees with the fetch origin, the reader surfaces it and does not adopt the asserted value.",
+    "module": "blyg/resolve",
+    "requirements": ["R12.2-1"],
+    "issue": "SUK-139",
+    "check": "spec",
+    "spec": "12.2",
+    "given": "A manifest fetched from one origin whose site key names a different origin.",
+    "expect": {
+      "outcome": "The disagreement is surfaced to the user; the fetch origin remains the identity.",
+      "asserts": [
+        "The self-asserted site is advisory only.",
+        "The asserted value MUST NOT be adopted as identity.",
+        "Existing state is never silently re-scoped."
+      ]
+    }
+  },
+  {
+    "id": "resolution.redirect-bounded",
+    "description": "Redirects are bounded (recommended 5) and the final URL wins as the origin.",
+    "module": "blyg/fetch",
+    "requirements": ["R12.2-2"],
+    "issue": "SUK-139",
+    "check": "spec",
+    "spec": "12.2",
+    "given": "A subscription URL that redirects several times before serving a manifest.",
+    "expect": {
+      "outcome": "The reader follows a bounded number of redirects (recommended 5) and adopts the final URL as the identity origin.",
+      "asserts": [
+        "The redirect chain is bounded; an over-long chain fails resolution.",
+        "The final URL after redirects wins as the origin.",
+        "Each hop counts against the fetch budget."
+      ]
+    }
+  },
+  {
+    "id": "resolution.identity-change-confirm",
+    "description": "Adopting a new origin for an existing subscription is an identity change and MUST be user-confirmed, never automatic.",
+    "module": "blyg/resolve",
+    "requirements": ["R12.2-3"],
+    "issue": "SUK-139",
+    "check": "spec",
+    "spec": "12.2",
+    "given": "An existing subscription whose re-resolution now lands on a different final origin.",
+    "expect": {
+      "outcome": "The reader prompts the user to confirm re-pointing the subscription; nothing changes until confirmed.",
+      "asserts": [
+        "Origin changes are surfaced as identity changes.",
+        "No automatic re-scoping occurs.",
+        "Declining leaves the previous identity and state intact."
+      ]
+    }
+  },
+  {
+    "id": "resolution.conditional-request",
+    "description": "Polling uses conditional requests and honors 304 Not Modified.",
+    "module": "blyg/fetch",
+    "requirements": ["R12.3-1"],
+    "issue": "SUK-139",
+    "check": "spec",
+    "spec": "12.3",
+    "given": "A stored subscription with an ETag and Last-Modified from a prior poll.",
+    "expect": {
+      "outcome": "The next poll sends If-None-Match / If-Modified-Since and treats a 304 as 'no change', mutating nothing.",
+      "asserts": [
+        "Conditional headers are sent when the stored validators are present.",
+        "A 304 leaves stored state unchanged.",
+        "A changed response advances reconciliation."
+      ]
+    }
+  },
+  {
+    "id": "resolution.backoff",
+    "description": "Polling backs off exponentially, honors Retry-After, and never tightens the interval in response to failure; failure never discards stored state.",
+    "module": "blyg/fetch",
+    "requirements": ["R12.3-2"],
+    "issue": "SUK-139",
+    "check": "spec",
+    "spec": "12.3",
+    "given": "Repeated poll failures including a 429 carrying Retry-After.",
+    "expect": {
+      "outcome": "The interval grows (honoring Retry-After), never shrinks on failure, and stored items are left untouched.",
+      "asserts": [
+        "Backoff is exponential between attempts.",
+        "Retry-After is honored when present.",
+        "A poll failure MUST NOT mutate stored item state."
+      ]
+    }
+  },
+  {
+    "id": "resolution.user-agent",
+    "description": "Readers send an identifying User-Agent on fetches.",
+    "module": "blyg/fetch",
+    "requirements": ["R12.3-3"],
+    "issue": "SUK-139",
+    "check": "spec",
+    "spec": "12.3",
+    "given": "Any reader-initiated fetch during resolution or polling.",
+    "expect": {
+      "outcome": "Every request carries an identifying User-Agent naming the reader.",
+      "asserts": [
+        "The User-Agent is identifying, not a generic browser string.",
+        "It is sent on resolution and polling fetches alike."
+      ]
+    }
+  },
+  {
+    "id": "resolution.fetch-hygiene",
+    "description": "Fetch hygiene: bounded redirects, response size and time limits, and refusal to fetch private-network addresses.",
+    "module": "blyg/fetch",
+    "requirements": ["R14-2"],
+    "issue": "SUK-139",
+    "check": "spec",
+    "spec": "14",
+    "given": "A reader fetching arbitrary third-party URLs discovered from feeds and references.",
+    "expect": {
+      "outcome": "Fetches are bounded in redirects, size and time, and requests to private-network addresses are refused.",
+      "asserts": [
+        "Redirect count, body size and total time are bounded.",
+        "Private-network / loopback / link-local addresses are refused.",
+        "Refusal is surfaced, not retried forever."
+      ]
+    }
+  }
+]

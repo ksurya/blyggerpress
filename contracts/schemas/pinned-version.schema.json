@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "blygpress:pinned-version",
+  "title": "Blygger pinned version document — items/{id}/v{n}.json",
+  "description": "Reader-acceptance schema for a pinned version file (spec 8). Irrevocable: MUST return 200 forever once pinned. A pin carries its own citations (transclusions, stub_of, forked_from, generated).",
+  "type": "object",
+  "required": ["blyg", "id", "kind", "version", "at", "origin", "content_md", "content_html", "content_hash"],
+  "properties": {
+    "blyg": { "$ref": "blygpress:common#/$defs/BlygKey" },
+    "id": { "$ref": "blygpress:common#/$defs/Id" },
+    "kind": { "enum": ["fragment", "thread"], "description": "Withdrawal endcaps MUST NOT be pinned (spec 8 rule 2)." },
+    "version": { "type": "integer", "minimum": 1 },
+    "at": { "$ref": "blygpress:common#/$defs/Iso8601Utc" },
+    "note": { "type": ["string", "null"] },
+    "pinned": { "const": true },
+    "origin": { "type": "string" },
+    "page": { "type": "string" },
+    "author": { "$ref": "blygpress:common#/$defs/Author" },
+    "content_md": { "type": "string" },
+    "content_html": { "type": "string" },
+    "content_hash": { "$ref": "blygpress:common#/$defs/ContentHash" },
+    "transclusions": { "type": "array", "items": { "$ref": "blygpress:common#/$defs/Transclusion" } },
+    "stub_of": { "$ref": "blygpress:common#/$defs/StubOf" },
+    "forked_from": { "$ref": "blygpress:common#/$defs/AbsoluteReference" },
+    "generated": { "type": "array", "items": { "$ref": "blygpress:common#/$defs/GeneratedSpan" } }
+  },
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "comment": "A pinned version that involved generation carries its generated array; a pinned thread carries transclusions.",
+      "if": { "properties": { "kind": { "const": "thread" } }, "required": ["kind"] },
+      "then": { "required": ["transclusions"] }
+    }
+  ],
+  "x-emit-required": ["blyg", "id", "kind", "version", "at", "pinned", "origin", "page", "content_md", "content_html", "content_hash"],
+  "x-conformance": {
+    "spec": ["8", "8.4"],
+    "issue": "SUK-138",
+    "notes": [
+      "Pinned documents carry no media array; their content_html relies on media immutability (spec 8 rule 4).",
+      "No route serves an unpinned older version; a version display MUST NOT offer unpinned history (8.4).",
+      "Pinned pages, where served, are not publish events and MUST NOT appear in feed.xml or the archive index (8.4 rule 4)."
+    ]
+  }
+}

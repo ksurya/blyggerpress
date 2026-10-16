@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:blyg="https://blygger.org/ns/0.1" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Example Studio blyg</title>
+    <link>https://example.com/blyg/</link>
+    <description>Fixture feed (lossy notification plane).</description>
+    <lastBuildDate>Fri, 24 Jul 2026 09:00:00 GMT</lastBuildDate>
+    <blyg:level>2</blyg:level>
+    <blyg:manifest>https://example.com/blyg/blyg.json</blyg:manifest>
+    <item>
+      <guid isPermaLink="false">blyg:0ff73f8ranqzaf0b2n3qpxxzd7:v1</guid>
+      <link>https://example.com/blyg/f/0ff73f8ranqzaf0b2n3qpxxzd7/</link>
+      <title>Remote fragment content.</title>
+      <description><![CDATA[<p>Remote fragment content.</p>
+<blockquote><p>Remote fragment content.</p><p>— quoted from <a href="https://blyg.protocol-institute.org/f/7gvp7ms7wq4nks6erdbbdp8cqc/">blyg.protocol-institute.org · v1</a></p></blockquote>
+<p>My own continuation of the thought.</p>]]></description>
+      <pubDate>Fri, 24 Jul 2026 09:00:00 GMT</pubDate>
+      <blyg:id>0ff73f8ranqzaf0b2n3qpxxzd7</blyg:id>
+      <blyg:kind>fragment</blyg:kind>
+      <blyg:version>1</blyg:version>
+      <blyg:created>2026-07-24T09:00:00Z</blyg:created>
+      <blyg:item>https://example.com/blyg/items/0ff73f8ranqzaf0b2n3qpxxzd7.json</blyg:item>
+      <dc:creator>Venkatesh Rao</dc:creator>
+    </item>
+    <item>
+      <guid isPermaLink="false">blyg:3wh683yzk9m9byd7tr17fpaxfs:v2</guid>
+      <link>https://example.com/blyg/f/3wh683yzk9m9byd7tr17fpaxfs/</link>
+      <title>withdrawn</title>
+      <pubDate>Thu, 23 Jul 2026 09:00:00 GMT</pubDate>
+      <blyg:id>3wh683yzk9m9byd7tr17fpaxfs</blyg:id>
+      <blyg:kind>withdrawn</blyg:kind>
+      <blyg:version>2</blyg:version>
+      <blyg:created>2026-07-22T09:00:00Z</blyg:created>
+      <blyg:item>https://example.com/blyg/items/3wh683yzk9m9byd7tr17fpaxfs.json</blyg:item>
+    </item>
+    <item>
+      <guid isPermaLink="false">blyg:7jbfafqm50v2w8xd9hkxz3yesh:v1</guid>
+      <link>https://example.com/blyg/t/7jbfafqm50v2w8xd9hkxz3yesh/</link>
+      <title>This is my response to the quoted fragment.</title>
+      <description><![CDATA[<blockquote class="blyg-transclusion" data-blyg-id="7gvp7ms7wq4nks6erdbbdp8cqc" data-blyg-version="1" data-blyg-origin="https://blyg.protocol-institute.org/"><p>Remote fragment content.</p></blockquote>
+<p>This is my response to the quoted fragment.</p>]]></description>
+      <pubDate>Tue, 21 Jul 2026 09:00:00 GMT</pubDate>
+      <blyg:id>7jbfafqm50v2w8xd9hkxz3yesh</blyg:id>
+      <blyg:kind>thread</blyg:kind>
+      <blyg:version>1</blyg:version>
+      <blyg:created>2026-07-21T09:00:00Z</blyg:created>
+      <blyg:item>https://example.com/blyg/items/7jbfafqm50v2w8xd9hkxz3yesh.json</blyg:item>
+      <dc:creator>Venkatesh Rao</dc:creator>
+    </item>
+    <item>
+      <guid isPermaLink="false">blyg:3ev1cjtw7c6q5y8cd0r7aj3bhc:v2</guid>
+      <link>https://example.com/blyg/t/3ev1cjtw7c6q5y8cd0r7aj3bhc/</link>
+      <title>added the remote quote — A thread about protocol</title>
+      <description><![CDATA[<h1>A thread about protocol</h1>
+<p>Markdown source of the <em>latest</em> version.</p>
+<blockquote class="blyg-transclusion" data-blyg-id="1jt332depwffcsyfz9txf8c9r9" data-blyg-version="3"><p>Markdown source of the <em>latest</em> version.</p></blockquote>
+<blockquote class="blyg-transclusion" data-blyg-id="7gvp7ms7wq4nks6erdbbdp8cqc" data-blyg-version="1" data-blyg-origin="https://blyg.protocol-institute.org/"><p>Remote fragment content.</p></blockquote>
+<blockquote class="blyg-transclusion blyg-partial" data-blyg-id="5gb4pd4d8bme2zzkq7t46zkkhx" data-blyg-version="1" data-blyg-origin="https://blyg.protocol-institute.org/"><p>Stigmergy is what a protocol looks like from inside</p></blockquote>
+<div class="blyg-tk-gen"><p>Commentary: the quote above deliberates whether the mechanism is <a href="https://example.com/blyg/f/1jt332depwffcsyfz9txf8c9r9/">desirable</a>.</p></div>
+]]></description>
+      <pubDate>Mon, 20 Jul 2026 10:00:00 GMT</pubDate>
+      <blyg:id>3ev1cjtw7c6q5y8cd0r7aj3bhc</blyg:id>
+      <blyg:kind>thread</blyg:kind>
+      <blyg:version>2</blyg:version>
+      <blyg:created>2026-07-19T08:00:00Z</blyg:created>
+      <blyg:item>https://example.com/blyg/items/3ev1cjtw7c6q5y8cd0r7aj3bhc.json</blyg:item>
+      <dc:creator>Venkatesh Rao</dc:creator>
+    </item>
+    <item>
+      <guid isPermaLink="false">blyg:3ev1cjtw7c6q5y8cd0r7aj3bhc:v1</guid>
+      <link>https://example.com/blyg/t/3ev1cjtw7c6q5y8cd0r7aj3bhc/</link>
+      <title>A thread about protocol</title>
+      <description><![CDATA[<h1>A thread about protocol</h1>
+<p>Markdown source of the <em>latest</em> version.</p>
+<blockquote class="blyg-transclusion" data-blyg-id="1jt332depwffcsyfz9txf8c9r9" data-blyg-version="3"><p>Markdown source of the <em>latest</em> version.</p></blockquote>
+<blockquote class="blyg-transclusion" data-blyg-id="7gvp7ms7wq4nks6erdbbdp8cqc" data-blyg-version="1" data-blyg-origin="https://blyg.protocol-institute.org/"><p>Remote fragment content.</p></blockquote>
+<blockquote class="blyg-transclusion blyg-partial" data-blyg-id="5gb4pd4d8bme2zzkq7t46zkkhx" data-blyg-version="1" data-blyg-origin="https://blyg.protocol-institute.org/"><p>Stigmergy is what a protocol looks like from inside</p></blockquote>
+<div class="blyg-tk-gen"><p>Commentary: the quote above deliberates whether the mechanism is <a href="https://example.com/blyg/f/1jt332depwffcsyfz9txf8c9r9/">desirable</a>.</p></div>
+]]></description>
+      <pubDate>Sun, 19 Jul 2026 08:00:00 GMT</pubDate>
+      <blyg:id>3ev1cjtw7c6q5y8cd0r7aj3bhc</blyg:id>
+      <blyg:kind>thread</blyg:kind>
+      <blyg:version>1</blyg:version>
+      <blyg:created>2026-07-19T08:00:00Z</blyg:created>
+      <blyg:item>https://example.com/blyg/items/3ev1cjtw7c6q5y8cd0r7aj3bhc.json</blyg:item>
+      <dc:creator>Venkatesh Rao</dc:creator>
+    </item>
+    <item>
+      <guid isPermaLink="false">blyg:6y1e4khfxxckyd9dhwgrtv2dj4:v1</guid>
+      <link>https://example.com/blyg/f/6y1e4khfxxckyd9dhwgrtv2dj4/</link>
+      <title>A diagram: a diagram</title>
+      <description><![CDATA[<p>A diagram: <img src="https://example.com/blyg/media/x7f2.png" alt="a diagram"></p>]]></description>
+      <pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+      <blyg:id>6y1e4khfxxckyd9dhwgrtv2dj4</blyg:id>
+      <blyg:kind>fragment</blyg:kind>
+      <blyg:version>1</blyg:version>
+      <blyg:created>2026-07-18T12:00:00Z</blyg:created>
+      <blyg:item>https://example.com/blyg/items/6y1e4khfxxckyd9dhwgrtv2dj4.json</blyg:item>
+      <dc:creator>Venkatesh Rao</dc:creator>
+    </item>
+    <item>
+      <guid isPermaLink="false">blyg:1jt332depwffcsyfz9txf8c9r9:v3</guid>
+      <link>https://example.com/blyg/f/1jt332depwffcsyfz9txf8c9r9/</link>
+      <title>sharpened the claim — Markdown source of the latest…</title>
+      <description><![CDATA[<p>Markdown source of the <em>latest</em> version.</p>]]></description>
+      <pubDate>Sat, 18 Jul 2026 09:30:00 GMT</pubDate>
+      <blyg:id>1jt332depwffcsyfz9txf8c9r9</blyg:id>
+      <blyg:kind>fragment</blyg:kind>
+      <blyg:version>3</blyg:version>
+      <blyg:created>2026-07-17T18:00:00Z</blyg:created>
+      <blyg:item>https://example.com/blyg/items/1jt332depwffcsyfz9txf8c9r9.json</blyg:item>
+      <dc:creator>Venkatesh Rao</dc:creator>
+    </item>
+    <item>
+      <guid isPermaLink="false">blyg:1jt332depwffcsyfz9txf8c9r9:v2</guid>
+      <link>https://example.com/blyg/f/1jt332depwffcsyfz9txf8c9r9/</link>
+      <title>typo — Markdown source of the latest…</title>
+      <description><![CDATA[<p>Markdown source of the <em>latest</em> version.</p>]]></description>
+      <pubDate>Fri, 17 Jul 2026 21:12:00 GMT</pubDate>
+      <blyg:id>1jt332depwffcsyfz9txf8c9r9</blyg:id>
+      <blyg:kind>fragment</blyg:kind>
+      <blyg:version>2</blyg:version>
+      <blyg:created>2026-07-17T18:00:00Z</blyg:created>
+      <blyg:item>https://example.com/blyg/items/1jt332depwffcsyfz9txf8c9r9.json</blyg:item>
+      <dc:creator>Venkatesh Rao</dc:creator>
+    </item>
+    <item>
+      <guid isPermaLink="false">blyg:1jt332depwffcsyfz9txf8c9r9:v1</guid>
+      <link>https://example.com/blyg/f/1jt332depwffcsyfz9txf8c9r9/</link>
+      <title>Markdown source of the latest…</title>
+      <description><![CDATA[<p>Markdown source of the <em>latest</em> version.</p>]]></description>
+      <pubDate>Fri, 17 Jul 2026 18:00:00 GMT</pubDate>
+      <blyg:id>1jt332depwffcsyfz9txf8c9r9</blyg:id>
+      <blyg:kind>fragment</blyg:kind>
+      <blyg:version>1</blyg:version>
+      <blyg:created>2026-07-17T18:00:00Z</blyg:created>
+      <blyg:item>https://example.com/blyg/items/1jt332depwffcsyfz9txf8c9r9.json</blyg:item>
+      <dc:creator>Venkatesh Rao</dc:creator>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "blygpress:archive-index",
+  "title": "Blygger archive index — items/index.json",
+  "description": "Reader-acceptance schema for the archive index (spec 6.2). Every item ever published, including withdrawn, no window, ordered by updated descending. This is the reconciliation surface (spec 13.2).",
+  "type": "object",
+  "required": ["updated", "items"],
+  "properties": {
+    "updated": { "$ref": "blygpress:common#/$defs/Iso8601Utc" },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "blygpress:common#/$defs/ItemSummary" }
+    }
+  },
+  "additionalProperties": true,
+  "x-emit-required": ["updated", "items"],
+  "x-conformance": {
+    "spec": ["6.2", "13.2"],
+    "issue": "SUK-138",
+    "notes": [
+      "Complete by construction; includes withdrawn items; no window.",
+      "Readers diff this against local state for total recovery (13.2)."
+    ]
+  }
+}

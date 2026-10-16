@@ -1,0 +1,43 @@
+{
+  "blyg": "0.3",
+  "id": "7jbfafqm50v2w8xd9hkxz3yesh",
+  "kind": "thread",
+  "origin": "https://example.com/blyg/",
+  "page": "t/7jbfafqm50v2w8xd9hkxz3yesh/",
+  "author": {
+    "name": "Venkatesh Rao",
+    "url": "https://example.com/blyg/"
+  },
+  "created": "2026-07-21T09:00:00Z",
+  "updated": "2026-07-21T09:00:00Z",
+  "version": 1,
+  "content_md": "![[7gvp7ms7wq4nks6erdbbdp8cqc]]\n\nThis is my response to the quoted fragment.\n",
+  "content_html": "<blockquote class=\"blyg-transclusion\" data-blyg-id=\"7gvp7ms7wq4nks6erdbbdp8cqc\" data-blyg-version=\"1\" data-blyg-origin=\"https://blyg.protocol-institute.org/\"><p>Remote fragment content.</p></blockquote>\n<p>This is my response to the quoted fragment.</p>",
+  "content_hash": "sha256:ea8759abb1f6a1efb475e14f4d0b7d6c6791510573a7e2ef26b85ca25d497b6d",
+  "changelog": [
+    {
+      "version": 1,
+      "at": "2026-07-21T09:00:00Z",
+      "note": null
+    }
+  ],
+  "transclusions": [
+    {
+      "id": "7gvp7ms7wq4nks6erdbbdp8cqc",
+      "version": 1,
+      "origin": "https://blyg.protocol-institute.org/"
+    }
+  ],
+  "stub_of": {
+    "origin": "https://blyg.protocol-institute.org/",
+    "id": "7gvp7ms7wq4nks6erdbbdp8cqc",
+    "version": 1,
+    "cited": {
+      "source": "Protocol Institute Blyg",
+      "author": "Editor",
+      "excerpt": "Remote fragment content.",
+      "url": "https://blyg.protocol-institute.org/f/7gvp7ms7wq4nks6erdbbdp8cqc/",
+      "retrieved": "2026-07-21T08:59:00Z"
+    }
+  }
+}

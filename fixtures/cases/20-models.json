@@ -1,0 +1,78 @@
+[
+  {
+    "id": "model.feed.sample-head",
+    "description": "Reader-side normalized feed window head (spec 7). The window keeps one entry per publish event, each rendering the item's LATEST content while keeping its own blyg:version; the withdrawn item contributes exactly one entry.",
+    "module": "blyg/feed",
+    "requirements": ["R7-4", "R7-7"],
+    "issue": "SUK-138",
+    "check": "schema",
+    "schema": "feed-model",
+    "input": { "$file": "fixtures/models/sample-feed.head.json" },
+    "expect": { "valid": true }
+  },
+  {
+    "id": "model.blogroll.sample",
+    "description": "Reader-side normalized blogroll model (spec 11): standard OPML 2.0, each entry one type=\"rss\" outline with xmlUrl/htmlUrl/text, no blyg-specific attributes.",
+    "module": "blyg/opml",
+    "requirements": ["R11-1", "R11-2", "R11-4"],
+    "issue": "SUK-138",
+    "check": "schema",
+    "schema": "blogroll",
+    "input": { "$file": "fixtures/models/sample-blogroll.json" },
+    "expect": { "valid": true }
+  },
+  {
+    "id": "item.author-opaque",
+    "description": "author is a client-asserted opaque object (spec 5.5). Readers MUST accept any object, never reject an item over its contents, and never treat it as an addressable entity.",
+    "module": "blyg/item",
+    "requirements": ["R5.5-1", "R5.5-3"],
+    "issue": "SUK-137",
+    "check": "schema",
+    "schema": "item",
+    "input": {
+      "blyg": "0.3",
+      "id": "6y1e4khfxxckyd9dhwgrtv2dj4",
+      "kind": "fragment",
+      "origin": "https://example.com/blyg/",
+      "page": "f/6y1e4khfxxckyd9dhwgrtv2dj4/",
+      "author": {
+        "name": "Opaque Byline",
+        "url": "https://example.com/blyg/",
+        "nested": { "anything": [1, 2, 3], "even": { "deeper": true } },
+        "weird key with spaces": null
+      },
+      "created": "2026-07-18T12:00:00Z",
+      "updated": "2026-07-18T12:00:00Z",
+      "version": 1,
+      "content_md": "x",
+      "content_html": "<p>x</p>",
+      "content_hash": "sha256:2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881",
+      "changelog": [{ "version": 1, "at": "2026-07-18T12:00:00Z", "note": null }]
+    },
+    "expect": { "valid": true }
+  },
+  {
+    "id": "item.author-invalid-shape",
+    "description": "author, when present, MUST be a JSON object; a string is not a valid author and makes the document nonconforming (spec 5.5).",
+    "module": "blyg/item",
+    "requirements": ["R5.5-1"],
+    "issue": "SUK-137",
+    "check": "schema",
+    "schema": "item",
+    "input": {
+      "blyg": "0.3",
+      "id": "6y1e4khfxxckyd9dhwgrtv2dj4",
+      "kind": "fragment",
+      "origin": "https://example.com/blyg/",
+      "created": "2026-07-18T12:00:00Z",
+      "updated": "2026-07-18T12:00:00Z",
+      "version": 1,
+      "content_md": "x",
+      "content_html": "<p>x</p>",
+      "content_hash": "sha256:2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881",
+      "changelog": [{ "version": 1, "at": "2026-07-18T12:00:00Z", "note": null }],
+      "author": "just a string"
+    },
+    "expect": { "valid": false }
+  }
+]

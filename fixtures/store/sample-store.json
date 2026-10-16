@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "publicationIdentity": {
+    "origin": "https://example.com/blyg/",
+    "title": "Example Studio blyg"
+  },
+  "drafts": [
+    {
+      "localId": "draft-1",
+      "itemId": null,
+      "kind": "fragment",
+      "baseVersion": 0,
+      "contentMd": "DRAFT-ONLY: an unpublished idea.",
+      "note": null,
+      "generated": false,
+      "createdAt": "2026-07-25T09:00:00Z",
+      "updatedAt": "2026-07-25T09:05:00Z",
+      "authoringState": {
+        "instruction": "PRIVATE-INSTRUCTION-SECRET"
+      }
+    }
+  ],
+  "notes": [
+    {
+      "targetKey": "https://blyg.protocol-institute.org/#7gvp7ms7wq4nks6erdbbdp8cqc",
+      "text": "PRIVATE-NOTE-SECRET",
+      "at": "2026-07-25T10:00:00Z"
+    }
+  ],
+  "feedback": [
+    {
+      "targetKey": "https://blyg.protocol-institute.org/#7gvp7ms7wq4nks6erdbbdp8cqc",
+      "value": "like",
+      "at": "2026-07-25T10:01:00Z"
+    }
+  ],
+  "ranking": {
+    "intent": "PRIVATE-INTENT",
+    "interests": [
+      {
+        "text": "protocols",
+        "weight": 1
+      },
+      {
+        "text": "static sites",
+        "weight": 0.5
+      }
+    ],
+    "updatedAt": "2026-07-25T10:02:00Z"
+  },
+  "subscriptions": [
+    {
+      "id": "sub-remote",
+      "mode": "blyg",
+      "identityOrigin": "https://blyg.protocol-institute.org/",
+      "manifestUrl": "https://blyg.protocol-institute.org/blyg.json",
+      "feedUrl": "https://blyg.protocol-institute.org/feed.xml",
+      "title": "Protocol Institute Blyg",
+      "blogrollVisible": false,
+      "lossy": false,
+      "etag": "W/\"abc\"",
+      "lastModified": "2026-07-16T21:00:00Z",
+      "backoffUntil": null,
+      "lastPolledAt": "2026-07-25T10:00:00Z",
+      "addedAt": "2026-07-20T00:00:00Z"
+    },
+    {
+      "id": "sub-legacy",
+      "mode": "legacy",
+      "identityOrigin": "https://interconnected.org/home/feed",
+      "manifestUrl": null,
+      "feedUrl": "https://interconnected.org/home/feed",
+      "title": "Interconnected",
+      "blogrollVisible": true,
+      "lossy": false,
+      "etag": null,
+      "lastModified": null,
+      "backoffUntil": null,
+      "lastPolledAt": "2026-07-25T10:00:00Z",
+      "addedAt": "2026-07-21T00:00:00Z"
+    }
+  ],
+  "imported": [
+    {
+      "origin": "https://blyg.protocol-institute.org/",
+      "id": "7gvp7ms7wq4nks6erdbbdp8cqc",
+      "kind": "fragment",
+      "version": 1,
+      "updated": "2026-07-16T20:10:00Z",
+      "contentHash": "sha256:eeb3f02dd9d731940277cc1af6011b9fbbe2eaef840b3f1a63008ee6c7b649d8",
+      "contentHtml": "<p>Remote fragment content.</p>",
+      "contentMd": "Remote fragment content.",
+      "author": {
+        "name": "Editor",
+        "url": "https://blyg.protocol-institute.org/"
+      },
+      "page": "https://blyg.protocol-institute.org/f/7gvp7ms7wq4nks6erdbbdp8cqc/",
+      "media": [],
+      "retainedPinnedVersion": 1,
+      "l0": false,
+      "watermark": 1,
+      "observedAt": "2026-07-25T10:00:00Z",
+      "discrepancies": []
+    }
+  ],
+  "outboundMentions": [
+    {
+      "source": "https://example.com/blyg/t/7jbfafqm50v2w8xd9hkxz3yesh/",
+      "target": "https://blyg.protocol-institute.org/f/7gvp7ms7wq4nks6erdbbdp8cqc/",
+      "relation": "stub",
+      "targetVersionSeen": 1,
+      "endpoint": "https://blyg.protocol-institute.org/webmention",
+      "attempts": 1,
+      "nextAttemptAt": null,
+      "state": "sent"
+    }
+  ],
+  "inboundMentions": [
+    {
+      "source": "https://blyg.protocol-institute.org/f/7gvp7ms7wq4nks6erdbbdp8cqc/",
+      "target": "https://example.com/blyg/t/7jbfafqm50v2w8xd9hkxz3yesh/",
+      "status": "verified",
+      "relation": "transclusion",
+      "sourceId": "7gvp7ms7wq4nks6erdbbdp8cqc",
+      "sourceOrigin": "https://blyg.protocol-institute.org/",
+      "sourceVersion": 1,
+      "sourceKind": "fragment",
+      "sourcePage": "https://blyg.protocol-institute.org/f/7gvp7ms7wq4nks6erdbbdp8cqc/"
+    }
+  ],
+  "publishTargets": [
+    {
+      "id": "target-1",
+      "provider": "github",
+      "repo": "example/example-blyg",
+      "branch": "main",
+      "basePath": "blyg/",
+      "siteUrl": "https://example.com/blyg/"
+    }
+  ],
+  "credentials": {
+    "github": {
+      "provider": "github",
+      "configured": true,
+      "storage": "session"
+    }
+  }
+}

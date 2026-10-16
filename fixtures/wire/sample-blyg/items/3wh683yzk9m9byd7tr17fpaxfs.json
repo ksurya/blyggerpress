@@ -1,0 +1,35 @@
+{
+  "blyg": "0.3",
+  "id": "3wh683yzk9m9byd7tr17fpaxfs",
+  "kind": "withdrawn",
+  "origin": "https://example.com/blyg/",
+  "page": "f/3wh683yzk9m9byd7tr17fpaxfs/",
+  "author": {
+    "name": "Venkatesh Rao",
+    "url": "https://example.com/blyg/"
+  },
+  "created": "2026-07-22T09:00:00Z",
+  "updated": "2026-07-23T09:00:00Z",
+  "version": 2,
+  "content_md": "",
+  "content_html": "",
+  "content_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "media": [],
+  "changelog": [
+    {
+      "version": 1,
+      "at": "2026-07-22T09:00:00Z",
+      "note": null
+    },
+    {
+      "version": 2,
+      "at": "2026-07-23T09:00:00Z",
+      "note": "withdrawn"
+    }
+  ],
+  "forked_from": {
+    "origin": "https://blyg.protocol-institute.org/",
+    "id": "7gvp7ms7wq4nks6erdbbdp8cqc",
+    "version": 1
+  }
+}

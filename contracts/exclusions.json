@@ -1,0 +1,106 @@
+{
+  "$comment": "Non-normative constructs from §16 of the pinned spec that this MVP baseline deliberately does NOT implement. Listed so that the exclusions are legible as decisions and so that implementations leave room correctly. Every entry names the room (if any) the MVP must leave for the construct.",
+  "specVersion": "0.3",
+  "source": "docs/spec/blygger-0.3.md#16",
+  "excluded": [
+    {
+      "id": "EX-16.3",
+      "section": "16.3",
+      "title": "Remote generation sources",
+      "status": "0.4 construct — fourth mention relation `source`",
+      "reason": "A new mention relation changes what a receiver must do to be correct, so it is a 0.4 construct and enters normative text only after a client builds it and two nodes exercise it.",
+      "room": "`generated[].sources[]` already uses the §5.9 reference shape with an optional origin, and readers ignore unknown members, so a 0.4 remote source needs no wire change. The MVP never emits or sends a `source` relation.",
+      "relatedRequirements": []
+    },
+    {
+      "id": "EX-16.4",
+      "section": "16.4",
+      "title": "Titles (closed)",
+      "status": "closed — no title field at any version",
+      "reason": "Items are titleless (§5.3) and the feed `<title>` is derived (§7). A leading heading shown as a linked title is presentation; the wire gains nothing and §5.3's reader rule forbids readers extracting a title from content.",
+      "room": "None. The RECOMMENDED `<title>` derivation already begins with the heading when there is one; no field is reserved.",
+      "relatedRequirements": ["R5.3-4", "R7-5"]
+    },
+    {
+      "id": "EX-16.5",
+      "section": "16.5",
+      "title": "Transitive staleness",
+      "status": "resolved — there is no such thing, and none will be defined",
+      "reason": "Staleness (§10.4) is a direct relation only; every edge of the quotation graph is owned by the publisher who baked it. A client MAY show a quoted item's own staleness as presentation, but that is a reading aid, not staleness of the quoting document.",
+      "room": "None on the wire; nested `data-blyg-*` attributes plus the direct §5.9 check are sufficient for a presentation aid.",
+      "relatedRequirements": ["R10.4-2"]
+    },
+    {
+      "id": "EX-16.6",
+      "section": "16.6",
+      "title": "The write surface",
+      "status": "never normative; a non-normative companion note is planned",
+      "reason": "A normative write API would make a static-file client with no server non-conformant for a reason unrelated to publishing. The protocol does not and will not specify how a client is written to.",
+      "room": "None on the manifest: tools discover a write endpoint through an HTML `rel` link on the studio page, never through the manifest. The manifest stays clean.",
+      "relatedRequirements": []
+    },
+    {
+      "id": "EX-16.6b",
+      "section": "16.6b",
+      "title": "Identity, groups, and agents",
+      "status": "ruled — no construct; technical notes only",
+      "reason": "Identity practice, multi-author grouping, and agent bylines are resolved without any wire construct; proof is a reciprocal link or a signature carried inside `author`, which §5.5 already permits as an opaque object.",
+      "room": "`author` is an opaque object readers must accept and carry verbatim; no addressable author exists.",
+      "relatedRequirements": ["R5.5-1", "R5.5-3", "R5.5-4"]
+    },
+    {
+      "id": "EX-16.6d",
+      "section": "16.6d",
+      "title": "Forward discovery / per-item responses surface",
+      "status": "kept closed; one 0.4 candidate",
+      "reason": "Verified mentions are studio signals (§15.5) and a publisher's public responses list is presentation that readers MUST NOT parse as protocol. A machine-readable list of who responded is a follower list by another name.",
+      "room": "None. Backward discovery already works from what a reader holds (nested origins, `stub_of`/`forked_from`, blogrolls); nothing derived may be published (no-metrics rule).",
+      "relatedRequirements": ["R13.5-3", "R15.5-1"]
+    },
+    {
+      "id": "EX-16.6e",
+      "section": "16.6e",
+      "title": "The manifest locates the surface (URI templates)",
+      "status": "0.4 construct — `feed`/`items` authoritative, `item`/`pin` RFC 6570 level-1 templates",
+      "reason": "A reader that ignores the template keys returns 404s on a templated blyg, so what a reader must do changes; it is a 0.4 construct.",
+      "room": "The MVP keeps §4's fixed filenames (`blyg.json`, `feed.xml`, `items/{id}.json`, `items/{id}/v{n}.json`) and leaves the RFC 6570 level-1 expansion primitive in the oracle (`rfc6570Expand`) so the same templates can be adopted without a shape change. Template keys are never emitted.",
+      "relatedRequirements": ["R4-2", "R4-3"]
+    },
+    {
+      "id": "EX-16.7a",
+      "section": "16.7",
+      "title": "Reserved — `![[id@vN]]` version-explicit transclusion",
+      "status": "reserved — not an available construct",
+      "reason": "The construct is reserved: it is not available, but the behaviour around it is normative and IS implemented.",
+      "room": "Publishers MUST reject `![[id@vN]]` at publish and readers MUST tolerate it as unknown (§10.1 rule 3). The MVP implements the reject/tolerate pair, not the construct.",
+      "relatedRequirements": ["R10.1-3"]
+    },
+    {
+      "id": "EX-16.7b",
+      "section": "16.7",
+      "title": "Reserved — plain (non-structural) mentions",
+      "status": "MAY — held apart as a lower class",
+      "reason": "Accepting plain mentions is optional (§15.6). If accepted at all they must be held apart from structurally verified mentions as a lower class.",
+      "room": "The MVP does not accept plain mentions; the 'held apart' rule is documented for any future acceptance. No storage shape is committed.",
+      "relatedRequirements": ["R15.6-1"]
+    },
+    {
+      "id": "EX-16.7c",
+      "section": "16.7",
+      "title": "Reserved — encrypted/permissioned content (L3)",
+      "status": "reserved — L3",
+      "reason": "Encrypted/permissioned content is an L3 concern and out of the L2 conformance target.",
+      "room": "None. The MVP stores and serves plaintext protocol content only.",
+      "relatedRequirements": []
+    },
+    {
+      "id": "EX-16.8",
+      "section": "16.8",
+      "title": "What will never appear",
+      "status": "never",
+      "reason": "Reply primitives (a network of soapboxes, not a conversation medium); follower graphs or any protocol 'follow' object; addressable authors; AI constructs on the wire beyond §5.7's passive provenance; version-significance markup; content-addressed identity; metrics of any kind; a fourth mention relation for links; and a normative write API.",
+      "room": "None. These absences are load-bearing: the MVP must not synthesize any of them.",
+      "relatedRequirements": ["R5.2-2", "R5.5-3", "R11-6"]
+    }
+  ]
+}

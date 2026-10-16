@@ -1,0 +1,18 @@
+{
+  "title": "Example Author's blogroll",
+  "outlines": [
+    {
+      "type": "rss",
+      "text": "Protocol Institute Blyg",
+      "xmlUrl": "https://blyg.protocol-institute.org/feed.xml",
+      "htmlUrl": "https://blyg.protocol-institute.org/"
+    },
+    {
+      "type": "rss",
+      "text": "Interconnected",
+      "xmlUrl": "https://interconnected.org/home/feed",
+      "htmlUrl": "https://interconnected.org/home/"
+    }
+  ],
+  "_note": "Standard OPML 2.0, no extensions; resolution of any xmlUrl upgrades via the feed's <blyg:manifest> (spec 11, 12.1)."
+}

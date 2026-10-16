@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:blyg="https://blygger.org/ns/0.1" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Protocol Institute Blyg</title>
+    <link>https://blyg.protocol-institute.org/</link>
+    <description>A fixture blyg used as a cross-origin source.</description>
+    <lastBuildDate>Thu, 16 Jul 2026 21:00:00 GMT</lastBuildDate>
+    <blyg:level>2</blyg:level>
+    <blyg:manifest>https://blyg.protocol-institute.org/blyg.json</blyg:manifest>
+    <item>
+      <guid isPermaLink="false">blyg:5gb4pd4d8bme2zzkq7t46zkkhx:v1</guid>
+      <link>https://blyg.protocol-institute.org/t/5gb4pd4d8bme2zzkq7t46zkkhx/</link>
+      <title>Stigmergy is what a protocol looks like from inside…</title>
+      <description><![CDATA[<blockquote class="blyg-transclusion" data-blyg-id="7gvp7ms7wq4nks6erdbbdp8cqc" data-blyg-version="1"><p>Remote fragment content.</p></blockquote>
+<p>Stigmergy is what a protocol looks like from inside, and the reason it looks like nothing at all is the point.</p>]]></description>
+      <pubDate>Thu, 16 Jul 2026 21:00:00 GMT</pubDate>
+      <blyg:id>5gb4pd4d8bme2zzkq7t46zkkhx</blyg:id>
+      <blyg:kind>thread</blyg:kind>
+      <blyg:version>1</blyg:version>
+      <blyg:created>2026-07-16T21:00:00Z</blyg:created>
+      <blyg:item>https://blyg.protocol-institute.org/items/5gb4pd4d8bme2zzkq7t46zkkhx.json</blyg:item>
+      <dc:creator>Editor</dc:creator>
+    </item>
+    <item>
+      <guid isPermaLink="false">blyg:7gvp7ms7wq4nks6erdbbdp8cqc:v1</guid>
+      <link>https://blyg.protocol-institute.org/f/7gvp7ms7wq4nks6erdbbdp8cqc/</link>
+      <title>Remote fragment content.</title>
+      <description><![CDATA[<p>Remote fragment content.</p>]]></description>
+      <pubDate>Thu, 16 Jul 2026 20:10:00 GMT</pubDate>
+      <blyg:id>7gvp7ms7wq4nks6erdbbdp8cqc</blyg:id>
+      <blyg:kind>fragment</blyg:kind>
+      <blyg:version>1</blyg:version>
+      <blyg:created>2026-07-16T20:10:00Z</blyg:created>
+      <blyg:item>https://blyg.protocol-institute.org/items/7gvp7ms7wq4nks6erdbbdp8cqc.json</blyg:item>
+      <dc:creator>Editor</dc:creator>
+    </item>
+  </channel>
+</rss>

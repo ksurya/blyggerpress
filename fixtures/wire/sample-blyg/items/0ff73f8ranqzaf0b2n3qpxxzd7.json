@@ -1,0 +1,29 @@
+{
+  "blyg": "0.3",
+  "id": "0ff73f8ranqzaf0b2n3qpxxzd7",
+  "kind": "fragment",
+  "origin": "https://example.com/blyg/",
+  "page": "f/0ff73f8ranqzaf0b2n3qpxxzd7/",
+  "author": {
+    "name": "Venkatesh Rao",
+    "url": "https://example.com/blyg/"
+  },
+  "created": "2026-07-24T09:00:00Z",
+  "updated": "2026-07-24T09:00:00Z",
+  "version": 1,
+  "content_md": "Remote fragment content.\n\n> Remote fragment content.\n>\n> — quoted from [blyg.protocol-institute.org · v1](https://blyg.protocol-institute.org/f/7gvp7ms7wq4nks6erdbbdp8cqc/)\n\nMy own continuation of the thought.\n",
+  "content_html": "<p>Remote fragment content.</p>\n<blockquote><p>Remote fragment content.</p><p>— quoted from <a href=\"https://blyg.protocol-institute.org/f/7gvp7ms7wq4nks6erdbbdp8cqc/\">blyg.protocol-institute.org · v1</a></p></blockquote>\n<p>My own continuation of the thought.</p>",
+  "content_hash": "sha256:0a3bf6811e6f5b74b40953625886e93f7e3cc42f5c5351ad5df715872ae35266",
+  "changelog": [
+    {
+      "version": 1,
+      "at": "2026-07-24T09:00:00Z",
+      "note": null
+    }
+  ],
+  "forked_from": {
+    "origin": "https://blyg.protocol-institute.org/",
+    "id": "7gvp7ms7wq4nks6erdbbdp8cqc",
+    "version": 1
+  }
+}

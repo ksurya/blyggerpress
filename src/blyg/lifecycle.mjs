@@ -445,6 +445,21 @@ export function createLifecycle(options = {}) {
     return [...items.values()].map(deepCopy);
   }
 
+  // Restore private authoring history, never wire documents. Validate before use.
+  for (const saved of options.initialItems ?? []) {
+    const item = deepCopy(saved);
+    if (items.has(item.id)) throw new LifecycleError('duplicate restored item');
+    selfCheck(item);
+    items.set(item.id, item);
+  }
+  for (const saved of options.initialDrafts ?? []) {
+    newDraft(saved);
+  }
+  for (const id of drafts.keys()) {
+    const match = /^draft-(\d+)$/.exec(id);
+    if (match) draftCounter = Math.max(draftCounter, Number(match[1]));
+  }
+
   return {
     newDraft,
     newFork: (pin, forkOptions) => newDraft(forkPinnedDocument(pin, forkOptions)),

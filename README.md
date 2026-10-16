@@ -6,7 +6,7 @@ shared contracts the rest of the project is built against.
 This repository pins the Blygger 0.3 specification and shared contracts, with
 reader imports (SUK-140), the item lifecycle (SUK-137), and static publication
 export (SUK-138), and composition/provenance (SUK-141) implemented.
-The remaining studio, deployment, and release work is tracked by
+The standalone studio (SUK-142) integrates these modules. Remaining deployment and release work is tracked by
 SUK-136..SUK-146.
 
 ## What this repo contains
@@ -158,7 +158,7 @@ stale files from earlier deployments so unpinned history and unknown IDs return
 `_headers` requests permissive CORS on hosts that support it. Other hosts must
 configure JSON/XML CORS themselves. There is no Webmention endpoint or blogroll
 advertised by this export. The studio's future export button can invoke
-`downloadSiteBundle`; this repository does not yet contain a studio UI.
+`downloadSiteBundle`; the standalone studio invokes this exporter.
 
 `npm test` generates a lifecycle publication and runs all shared publication
 fixture assertions on its actual files, checks privacy and preservation failures,
@@ -169,8 +169,7 @@ and `xmllint` are available (that test is skipped on systems without them).
 
 The browser-compatible reader API now includes ordered URL discovery, bounded
 fetching, manual refresh, and RSS/Atom file import. It plugs into the existing
-private store and reconciliation engine; this repository does not yet include
-the standalone studio UI.
+private store and reconciliation engine; the standalone studio provides subscription, refresh, and file-import controls.
 
 ```js
 import { createStore, createHttpPorts, subscribe, refreshSubscription,
@@ -280,3 +279,44 @@ citations survive reconciliation and pin retention.
 
 The executable tests in `test/composition.test.mjs` cover every SUK-141 requirement;
 `fixtures/composition/snapshots.json` adds a cross-client nested/withdrawn example.
+
+
+## Standalone studio (SUK-142)
+
+Run `npm ci && npm run build`, then open `dist/index.html` in a browser.
+The artifact bundles all JavaScript, Markdown rendering, and styles in one file;
+it needs no CDN or development server. Keep using the same file location or
+hosted origin to access the same browser library. Browser storage availability
+and file-origin behavior depend on the browser; a storage failure blocks editing
+and reports the error without resetting existing data.
+
+Set a publication URL and title in **Library & publication**, then use **Write**
+for fragments and threads. Draft saves remain private. Preview uses the shared
+publication renderer; local publish creates a version, while the public ZIP is
+what you deploy. Published items support editing/return, pins, withdrawal,
+preview, and forks of pinned versions. Threads support quotation directives,
+partial quotations, and ordinary internal links. The optional composition JSON
+editor exposes stub references and generated-span disclosure metadata through
+the shared composition API. Invalid metadata or unresolved references fail
+without advancing the durable publication.
+
+**Read** supports private subscriptions, manual refresh, RSS/Atom file import,
+subscription/date filters, likes/dislikes, and per-post notes. Imported content
+runs in a sandboxed iframe with scripts and network resources blocked. Only
+subscriptions explicitly selected for the curated public blogroll become OPML
+entries in the public export. Drafts, notes, feedback, and other reader state
+are never passed to the public exporter.
+
+Private backup download and inspected, confirmed replacement restore live in
+**Library & publication**. Restore downloads the current backup before replacing
+the library. Save conflicts and storage errors retain editor input; reload a
+conflicting tab after preserving unsaved text. There is no automatic reset.
+
+Validation: `npm test`, `npm run test:fixtures`, and `npm run test:studio`.
+The browser check uses Playwright Chromium (`npx playwright install chromium`),
+or `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` for an installed Chrome binary. It
+checks the generated standalone file, publication preview, save/publish/reload,
+ZIP download, reader file import, note/feedback persistence, and a 390px layout.
+Screenshots are saved under `.context/`. Phone hardware and WebKit validation,
+media-upload UI, hosting/deployment, and full release conformance remain outside
+this implementation.

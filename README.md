@@ -53,3 +53,10 @@ forward**; §16 constructs are out of scope.
 
 Contract layer: **complete and gated**. Implementation: SUK-136..SUK-145,
 validated for full coverage and interoperability by SUK-146.
+
+## Private persistence
+
+SUK-136 supplies atomic IndexedDB persistence, v1→v2 migration, and private JSON
+backup/restore. See [`src/studio/README.md`](src/studio/README.md) for the UI
+integration API and failure behavior. Run `npm ci` then `npm test` for persistence
+and reader tests; `npm run test:fixtures` runs the contract gate.

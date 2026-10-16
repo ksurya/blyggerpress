@@ -10,5 +10,8 @@
   "scripts": {
     "test": "node --test \"test/**/*.test.mjs\"",
     "test:fixtures": "node tools/validate-fixtures.mjs"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "^6.2.6"
   }
 }

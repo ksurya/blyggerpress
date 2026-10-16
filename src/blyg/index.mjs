@@ -17,3 +17,9 @@ export * from "./item.mjs";
 export * from "./media.mjs";
 export * from "./lifecycle.mjs";
 export * from "./publication.mjs";
+
+// Reader import pipeline (SUK-140). Shared primitives re-export the owning modules.
+export * from "./primitives.mjs";
+export * from "./feed-reader.mjs";
+export * from "./reconcile.mjs";
+export * from "./importer.mjs";

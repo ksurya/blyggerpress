@@ -8,8 +8,8 @@
 //   blyg/lifecycle   the writer's state machine: drafts, publish events, pins, withdrawal
 //   blyg/publication the item-facing projection: publish events, archive rows, item files
 //
-// Not owned here (the SUK-138 publication surface): blyg/manifest, blyg/index,
-// blyg/feed, blyg/pins, blyg/export. blyg/publication exposes the seam they build on.
+// The SUK-138 publication adapter consumes these projections for complete
+// manifest, archive, RSS, readable pages, immutable media and ZIP export.
 
 export * from "./ids.mjs";
 export * from "./hash.mjs";
@@ -23,6 +23,12 @@ export * from "./primitives.mjs";
 export * from "./feed-reader.mjs";
 export * from "./reconcile.mjs";
 export * from "./importer.mjs";
+
+// Complete static publication surface and standalone browser download (SUK-138).
+export * from './feed.mjs';
+export * from './render.mjs';
+export * from './export.mjs';
+export * from './zip.mjs';
 
 export * from "./fetch.mjs";
 export * from "./resolve.mjs";

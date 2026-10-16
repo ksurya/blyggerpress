@@ -1,37 +1,16 @@
 // Shared wire primitives for the reader import path.
 //
-// These are the minimal, dependency-free readings of the shared contracts that
-// `blyg/reconcile` and its polling importer stand on: identity (§5.1), content
-// hashing (§5.1) and origin-scoped identity keys (§12.2, §13.1). They are forward
-// implementations of primitives the contract assigns elsewhere — `blyg/ids` and
-// `blyg/hash` (SUK-137), `blyg/reference` (SUK-141) — kept tiny and pure so the
-// owning modules can replace them without changing reconcile's observable
-// behaviour. Nothing here reads network, DOM or private studio state.
-import { createHash } from "node:crypto";
+// Identity and hashing come from their owning SUK-137 modules. Reference and
+// origin helpers remain here until SUK-141. All primitives work in browsers
+// and Node without importing Node-only APIs.
+export { CROCKFORD, isValidId } from "./ids.mjs";
+export { contentHash, sha256Hex } from "./hash.mjs";
 
-/** 128 random bits as 26 lowercase Crockford base32 chars (spec 5.1). */
-export const CROCKFORD = "0123456789abcdefghjkmnpqrstvwxyz";
-
-const ID_RE = /^[0-9abcdefghjkmnpqrstvwxyz]{26}$/;
 const BLYG_KEY_RE = /^[0-9]+\.[0-9]+$/;
-
-/** An id is exactly 26 canonical lowercase Crockford base32 chars (spec 5.1). */
-export function isValidId(id) {
-  return typeof id === "string" && ID_RE.test(id);
-}
 
 /** A protocol version key is any `0.x` value; readers accept them all (spec 3.1). */
 export function isValidBlygKey(key) {
   return typeof key === "string" && BLYG_KEY_RE.test(key);
-}
-
-/** content_hash = "sha256:" + hex(SHA-256(content_md as UTF-8)) (spec 5.1). */
-export function contentHash(contentMd) {
-  return "sha256:" + createHash("sha256").update(String(contentMd), "utf8").digest("hex");
-}
-
-export function sha256Hex(input) {
-  return createHash("sha256").update(String(input), "utf8").digest("hex");
 }
 
 /**

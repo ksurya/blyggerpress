@@ -29,3 +29,6 @@ export * from './feed.mjs';
 export * from './render.mjs';
 export * from './export.mjs';
 export * from './zip.mjs';
+
+export * from "./fetch.mjs";
+export * from "./resolve.mjs";

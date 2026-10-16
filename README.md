@@ -31,7 +31,8 @@ node tools/build-requirements.mjs    # regenerate docs/REQUIREMENTS.md
 node tools/build-wire-fixtures.mjs   # regenerate fixtures/wire/** and fixtures/store/**
 ```
 
-Requires Node.js 20+ (uses `import.meta.dirname`). No dependencies.
+Requires Node.js 20+ (uses `import.meta.dirname`). No runtime dependencies; run
+`npm ci` to install the IndexedDB test dependency.
 
 ## Documentation
 
@@ -100,3 +101,10 @@ withheld bodies and normalized quotes of 40 or more characters; this is a
 conservative guard, not a semantic proof. Authors must also avoid shorter quotes
 or paraphrases that reproduce withheld content. Generation provenance is
 allow-listed and self-asserted; authoring instructions never become wire fields.
+
+## Private persistence
+
+SUK-136 supplies atomic IndexedDB persistence, v1→v2 migration, and private JSON
+backup/restore. See [`src/studio/README.md`](src/studio/README.md) for the UI
+integration API and failure behavior. Run `npm ci` then `npm test` for persistence
+and reader tests; `npm run test:fixtures` runs the contract gate.

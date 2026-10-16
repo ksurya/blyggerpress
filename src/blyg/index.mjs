@@ -26,3 +26,8 @@ export * from "./importer.mjs";
 
 export * from "./fetch.mjs";
 export * from "./resolve.mjs";
+
+export * from './compose.mjs';
+export * from './fork.mjs';
+export * from './reference.mjs';
+export * from './markdown.mjs';

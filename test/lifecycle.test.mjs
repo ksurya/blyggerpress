@@ -163,6 +163,8 @@ test("R9-1: a withdrawal endcap empties content and media, keeps the changelog, 
 
 test("R9-1: withdrawing a thread empties transclusions and omits stub_of", () => {
   const lc = fixed(["2026-07-19T08:00:00Z", "2026-07-19T09:00:00Z"], ["3ev1cjtw7c6q5y8cd0r7aj3bhc"]);
+  const source = lc.newDraft({ contentMd: "source", contentHtml: "<p>source</p>" });
+  lc.publish(source.localId, { id: "1jt332depwffcsyfz9txf8c9r9", at: "2026-07-19T07:00:00Z" });
   const draft = lc.newDraft({
     kind: "thread",
     contentMd: "![[1jt332depwffcsyfz9txf8c9r9]]\n\nreply",

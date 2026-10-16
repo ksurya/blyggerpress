@@ -30,6 +30,8 @@
 // I/O, and validates its own output with the publisher-strictness rules before
 // releasing it.
 
+import { compose, hasCompositionSyntax } from "./compose.mjs";
+import { forkPinnedDocument } from "./fork.mjs";
 import { isValidId, newId } from "./ids.mjs";
 import { contentHash, sha256HexOfBytes } from "./hash.mjs";
 import { normalizeMediaEntry, isValidMediaEntry, createMediaLedger } from "./media.mjs";
@@ -223,6 +225,7 @@ export function createLifecycle(options = {}) {
       media: (init.media ?? []).map(normalizeMediaEntry),
       transclusions: kind === "thread" ? (init.transclusions ?? []).map(copyReference) : undefined,
       generated: init.generated?.map(copyGenerated),
+      generatedSpans: deepCopy(init.generatedSpans ?? []),
       stubOf: init.stubOf !== undefined ? copyStubOf(init.stubOf) : undefined,
       note: init.note ?? null,
       noteGenerated: init.noteGenerated ?? false,
@@ -237,7 +240,7 @@ export function createLifecycle(options = {}) {
     return deepCopy(draft);
   }
 
-  const EDITABLE = new Set(["contentMd", "contentHtml", "media", "transclusions", "generated", "stubOf", "note", "noteGenerated"]);
+  const EDITABLE = new Set(["contentMd", "contentHtml", "media", "transclusions", "generatedSpans", "generated", "stubOf", "note", "noteGenerated"]);
   const FORBIDDEN = new Set(["itemId", "kind", "forkedFrom", "page", "author", "localId", "baseVersion", "createdAt"]);
 
   /**
@@ -292,7 +295,7 @@ export function createLifecycle(options = {}) {
    * @returns {{itemId:string, version:number, at:string, kind:string}}
    */
   function publish(localId, overrides = {}) {
-    const draft = requireDraft(localId);
+    let draft = requireDraft(localId);
     if (origin === undefined) throw new LifecycleError("a lifecycle needs an origin to publish");
     const at = overrides.at ?? clock();
     if (!isIso8601Utc(at)) throw new LifecycleError("publish time must be an ISO 8601 UTC instant");
@@ -317,6 +320,18 @@ export function createLifecycle(options = {}) {
       if (draft.kind !== item.kind) throw new LifecycleError("a publish event keeps the item's authored kind (withdrawal is the only kind change)");
     }
 
+    // Compose at every publish, never at draft-save time. Legacy callers may
+    // supply rendered HTML for prose without composition syntax.
+    if (overrides.compose || draft.composed || draft.generatedSpans?.length || overrides.generatedSpans || hasCompositionSyntax(draft.contentMd)) {
+      const result = compose({ contentMd: draft.contentMd, kind: draft.kind,
+        origin, itemId: item.id, local: [...items.values()],
+        imported: options.getImported?.() ?? [], stubOf: draft.stubOf,
+        generatedSpans: overrides.generatedSpans ?? draft.generatedSpans ?? [], citedFor: overrides.citedFor });
+      draft = { ...draft, ...result, composed: true, generatedSpans: deepCopy(overrides.generatedSpans ?? draft.generatedSpans ?? []) };
+      if (!result.generated && draft.generated?.length && !draft.generatedSpans?.length) {
+        draft.contentHtml = `<div class="blyg-tk-gen">${draft.contentHtml}</div>`;
+      }
+    }
     const previous = latestVersion(item);
     const version = previous ? previous.version + 1 : 1;
     const note = overrides.note !== undefined ? overrides.note : draft.note;
@@ -352,7 +367,8 @@ export function createLifecycle(options = {}) {
     draft.itemId = item.id;
     draft.baseVersion = version;
     draft.updatedAt = at;
-    return { itemId: item.id, version, at, kind: record.kind };
+    drafts.set(localId, draft);
+    return { itemId: item.id, version, at, kind: record.kind, ...(draft.warnings?.length ? { warnings: deepCopy(draft.warnings) } : {}) };
   }
 
   /**
@@ -431,6 +447,8 @@ export function createLifecycle(options = {}) {
 
   return {
     newDraft,
+    newFork: (pin, forkOptions) => newDraft(forkPinnedDocument(pin, forkOptions)),
+    publishComposed: (localId, overrides = {}) => publish(localId, { ...overrides, compose: true }),
     saveDraft,
     getDraft,
     discardDraft,

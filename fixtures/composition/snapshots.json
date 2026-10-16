@@ -1,0 +1,26 @@
+{
+  "description": "Locally imported cross-client snapshots. The remote thread already contains a nested same-origin bake; composition must copy it without walking or fetching its source.",
+  "origin": "https://publisher.example/blyg/",
+  "contentMd": "![[3ev1cjtw7c6q5y8cd0r7aj3bhc]]\n\n![[1jt332depwffcsyfz9txf8c9r9]]\n> Frozen & retained",
+  "imported": [
+    {
+      "origin": "https://remote.example/archive/",
+      "id": "3ev1cjtw7c6q5y8cd0r7aj3bhc",
+      "kind": "thread",
+      "version": 7,
+      "contentHtml": "<p>Remote prose.</p><blockquote class=\"blyg-transclusion\" data-blyg-id=\"7gvp7ms7wq4nks6erdbbdp8cqc\" data-blyg-version=\"3\"><p>Nested frozen prose.</p></blockquote>"
+    },
+    {
+      "origin": "https://retained.example/",
+      "id": "1jt332depwffcsyfz9txf8c9r9",
+      "kind": "withdrawn",
+      "version": 9,
+      "retainedPinnedVersion": 4,
+      "pinnedSnapshot": { "kind": "fragment", "version": 4, "contentHtml": "<p>Frozen &amp; retained</p>" }
+    }
+  ],
+  "expectedReferences": [
+    { "id": "3ev1cjtw7c6q5y8cd0r7aj3bhc", "version": 7, "origin": "https://remote.example/archive/" },
+    { "id": "1jt332depwffcsyfz9txf8c9r9", "version": 4, "origin": "https://retained.example/", "selector": { "exact": "Frozen & retained" } }
+  ]
+}

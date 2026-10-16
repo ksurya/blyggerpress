@@ -157,3 +157,63 @@ SUK-136 supplies atomic IndexedDB persistence, v1→v2 migration, and private JS
 backup/restore. See [`src/studio/README.md`](src/studio/README.md) for the UI
 integration API and failure behavior. Run `npm ci` then `npm test` for persistence
 and reader tests; `npm run test:fixtures` runs the contract gate.
+
+### Composition and provenance (SUK-141)
+
+`blyg/compose` renders Markdown at publish time using only local published items
+and imported reader snapshots. Full and partial `![[id]]` directives bake quoted
+HTML; `[[id]]` produces an absolute ordinary link. Code is inert. Unknown,
+ambiguous, withdrawn without retention, and L0 targets fail publication. Local
+thread cycles fail; remote nested HTML is copied without walking its sources.
+Direct references stay in directive order. Source edits and withdrawal never
+rewrite a previously published bake or create pins.
+
+```js
+import { createLifecycle } from './src/blyg/index.mjs';
+const writer = createLifecycle({
+  origin: 'https://example.com/blyg/',
+  getImported: () => readerStore.imported,
+});
+const draft = writer.newDraft({
+  kind: 'thread', transclusions: [],
+  contentMd: `A response.\n\n![[${importedItemId}]]`,
+  stubOf: { origin: importedOrigin, id: importedItemId, version: seenVersion },
+});
+const event = writer.publishComposed(draft.localId);
+// event.warnings reports unpinned remote quotations, when present.
+```
+
+`publish` automatically composes active directives/internal links and continues
+composing that draft on later publishes, including removal of its last directive.
+`publishComposed` also renders ordinary Markdown from scratch. The lifecycle's
+existing prose-only, pre-rendered document API remains available to adapters.
+Stubs may name a blyg reference or a plain-web `{url}`; only a directly quoted
+blyg target updates the stub's version. Frozen `cited` labels stay outside HTML.
+
+For generated prose, drafts accept private `generatedSpans` with UTF-16 `start`
+and `end` offsets into `contentMd`, plus `sources`, `model`, and `at`. Ranges are
+ordered and nonoverlapping and surround complete Markdown constructs. Inline
+ranges use `blyg-tk-gen` spans; whole-body/block ranges use divs (`block: true`
+explicitly requests one). Only the public generation metadata reaches item JSON;
+o instructions or offset markers enter the Markdown or wire provenance.
+Generation sources are own-origin references and never become transclusions.
+
+`writer.newFork(pinnedDocument)` creates a draft with immutable, one-hop lineage.
+It preserves the pinned source's own Markdown prose, flattens inherited quotes
+recursively with visible attribution, and uses the pinned HTML's absolute links.
+It copies withdrawn quoted content when that content is already in the pin.
+Partiality comes from `blyg-partial` in the bake, supporting older clients whose
+attached `>` lines were prose. Inherited quotation classes and verification
+attributes disappear; generated disclosures survive with empty generation sources.
+An optional `pageForQuote` callback can supply known quoted-item pages; otherwise
+attribution links the item document. `checkForkPin` accepts a conditional-fetch
+adapter for a separate online pin check: contrary 4xx/invalid-200 evidence fails,
+while host failures return a warning. Composition itself performs no network I/O.
+
+`referenceStatus` compares direct references against a document fetched at an
+explicit identity origin. It never treats `cited`, an author object, or deeper
+quotation freshness as verification. Imported composition metadata and opaque
+citations survive reconciliation and pin retention.
+
+The executable tests in `test/composition.test.mjs` cover every SUK-141 requirement;
+`fixtures/composition/snapshots.json` adds a cross-client nested/withdrawn example.

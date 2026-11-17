@@ -1,0 +1,36 @@
+{
+  "name": "blyggerpress",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc -b && vite build && node scripts/inline.mjs",
+    "test": "node --test test/*.test.mjs",
+    "companion": "node scripts/companion.mjs",
+    "start": "node scripts/companion.mjs"
+  },
+  "dependencies": {
+    "@ui-sdk/core": "^0.1.0-beta.3",
+    "@ui-sdk/react": "^0.1.0-beta.3",
+    "dompurify": "https://registry.npmjs.org/dompurify/-/dompurify-3.3.2.tgz",
+    "fflate": "https://registry.npmjs.org/fflate/-/fflate-0.8.3.tgz",
+    "lucide-react": "https://registry.npmjs.org/lucide-react/-/lucide-react-0.577.0.tgz",
+    "marked": "https://registry.npmjs.org/marked/-/marked-15.0.12.tgz",
+    "react": "https://registry.npmjs.org/react/-/react-19.2.7.tgz",
+    "react-dom": "https://registry.npmjs.org/react-dom/-/react-dom-19.2.7.tgz"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "https://registry.npmjs.org/@tailwindcss/vite/-/vite-4.2.4.tgz",
+    "@types/react": "https://registry.npmjs.org/@types/react/-/react-19.2.14.tgz",
+    "@types/react-dom": "https://registry.npmjs.org/@types/react-dom/-/react-dom-19.2.3.tgz",
+    "tailwindcss": "https://registry.npmjs.org/tailwindcss/-/tailwindcss-4.2.4.tgz",
+    "typescript": "https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz",
+    "vite": "https://registry.npmjs.org/vite/-/vite-7.3.1.tgz"
+  },
+  "overrides": {
+    "@tailwindcss/node": "https://registry.npmjs.org/@tailwindcss/node/-/node-4.2.4.tgz",
+    "@tailwindcss/oxide": "https://registry.npmjs.org/@tailwindcss/oxide/-/oxide-4.2.4.tgz",
+    "@tailwindcss/oxide-darwin-arm64": "https://registry.npmjs.org/@tailwindcss/oxide-darwin-arm64/-/oxide-darwin-arm64-4.2.4.tgz"
+  }
+}

@@ -1,0 +1,14 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {newId,publish,hash,surface,pin,render,originURL} from '../src/protocol.mjs';
+const settings={origin:'https://example.org/arbitrary/nested/',author:'A & B',title:'A <blog>'};
+test('128-bit Crockford identity, hash, versioning and no history leak in RSS',async()=>{
+ const ids=new Set(Array.from({length:100},newId));assert.equal(ids.size,100);for(const id of ids)assert.match(id,/^[0-7][0-9abcdefghjkmnpqrstvwxyz]{25}$/);
+ const first=await publish({...settings,body:'Old private words'});const next=await publish({...settings,body:'Revised public words',previous:first,note:'Revised'});
+ assert.equal(next.id,first.id);assert.equal(next.version,2);assert.equal(next.created,first.created);assert.equal(next.content_hash,await hash(next.content_md));
+ const files=surface([next],settings);assert.equal((files['feed.xml'].match(/<item>/g)||[]).length,2);assert.ok(!files['feed.xml'].includes('Old private words'));assert.ok(files['feed.xml'].includes('A &lt;blog&gt;'));assert.ok(files['feed.xml'].includes('arbitrary/nested/items/'));assert.equal(JSON.parse(files['items/index.json']).items[0].version,2);
+});
+test('withdrawal empties content, keeps identity and collapses feed',async()=>{const a=await publish({...settings,body:'Some words'});const b=await publish({...settings,body:'',previous:a,withdraw:true});assert.equal(b.id,a.id);assert.equal(b.content_html,'');assert.deepEqual(b.transclusions,[]);assert.equal(b.version,2);const files=surface([b],settings);assert.equal((files['feed.xml'].match(/<item>/g)||[]).length,1);assert.ok(files['feed.xml'].includes('<title>withdrawn</title>'));assert.equal(JSON.parse(files['items/index.json']).items.length,1);assert.throws(()=>pin(b));});
+test('pins capture exact content without mutable history or media array',async()=>{const a=await publish({...settings,body:'Frozen'});const p=pin(a);await publish({...settings,body:'Changed',previous:a});assert.equal(p.content_md,'Frozen');assert.equal(p.pinned,true);assert.equal(p.changelog,undefined);assert.equal(p.media,undefined);});
+test('URLs become absolute and HTML or unsafe URL injection is inert',()=>{const html=render('[link](relative) ![image](media/a.png)\n\n<script>alert(1)</script>\n\n[bad](javascript:alert(1))',settings.origin);assert.ok(html.includes('https://example.org/arbitrary/nested/relative'));assert.ok(html.includes('https://example.org/arbitrary/nested/media/a.png'));assert.ok(!html.includes('<script>'));assert.ok(!html.includes('href="javascript:'));});
+test('invalid XML text, unsupported directives and kind mutation are rejected',async()=>{for(const body of ['bad\u0001','bad\ud800','![[missing]]'])await assert.rejects(publish({...settings,body}));const a=await publish({...settings,body:'short',kind:'fragment'});await assert.rejects(publish({...settings,body:'changed',kind:'thread',previous:a}));assert.throws(()=>originURL('javascript:alert(1)'));});
